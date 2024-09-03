@@ -26,6 +26,22 @@ kdd99はしたほうが良かった
 初期化の工夫
 ルーレット選択の実装
 """
+
+# SVMのパラメータ範囲を設定
+kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
+C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
+gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
+r_range = (-10, 10)#(-10, 10)
+degree_range = (2, 5) #ここが４，５だと処理終わらなくなる #(2, 5)
+svm_time = 0 #時間測定用
+svm_iter = int(1.0e6)#制限なし　＝　−１
+DEBAG = False #True or False
+#ABCのハイパーパラメータ
+COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
+LIMIT = 100#偵察バチのパラメータ
+CYCLES = 500#サイクル数
+DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
+
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -63,6 +79,11 @@ output_file = args.data+ "_"+str(args.output)+".txt"
 with open(output_file, 'w') as f:
     f.write(f"標準化: {args.std}\n")
     f.write(f"データセット: {args.data}\n")
+    f.write(f"打ち切り学習回数: {svm_iter}\n")
+    f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
+    f.write(f"偵察バチのLIMIT: {LIMIT}\n")
+    f.write(f"サイクル数: {CYCLES}\n")
+    
 STD = args.std#0で標準化有
 # データセットのロード
 if dataset_name == 'iris':
@@ -96,20 +117,6 @@ std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータ�
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
 x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
 
-# SVMのパラメータ範囲を設定
-kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
-C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
-gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-r_range = (-10, 10)#(-10, 10)
-degree_range = (2, 5) #ここが４，５だと処理終わらなくなる #(2, 5)
-svm_time = 0 #時間測定用
-svm_iter = int(1.0e5)#制限なし　＝　−１
-DEBAG = False #True or False
-#ABCのハイパーパラメータ
-COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
-LIMIT = 100#偵察バチのパラメータ
-CYCLES = 50#サイクル数
-DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 
 # 評価関数
 def evaluate_function(solution):
@@ -303,7 +310,7 @@ plt.xlabel('Generation')
 plt.ylabel('Best Fitness')
 plt.grid(True)
 #plt.show()
-plt.savefig(f"./{dataset_name}.pdf", bbox_inches="tight")
+plt.savefig(f"./{dataset_name}_{str(args.output)}.pdf", bbox_inches="tight")
 
 # すべての個体の出力
 for i in range(COLONY_SIZE):
