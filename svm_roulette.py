@@ -23,9 +23,11 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 kdd99はしたほうが良かった
 分類精度をちゃんと算出する
 多項式カーネルかつ特定のパラメータセットでは計算量が膨大になる(評価困難)
+→d(1-3)に変更(済)
 初期化の工夫
-ルーレット選択の実装
-実験を複数回やってそこから統計的な値を出す機能の追加
+ルーレット選択の実装(済)
+実験を複数回やってそこから統計的な値を出す機能の追加(済)
+学習セット、検証セット、テストセットでの分割
 パラメータの範囲（実験して良さそうな値出す)
 """
 # SVMのパラメータ範囲を設定
@@ -35,12 +37,12 @@ gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
 r_range = (-10, 10)#(-10, 10)
 degree_range = (1, 3) #ここが４，５だと処理終わらなくなる #(1, 3)
 svm_time = 0 #時間測定用
-svm_iter = int(1.0e9)#制限なし　＝　−１
+svm_iter = int(1.0e7)#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 500#サイクル数
+CYCLES = 50#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
 ex_cycle = 3
@@ -63,13 +65,16 @@ def load_kdd99():
 
     df = pd.read_csv(url, names=col_names)
     df= df.drop(['protocol_type', 'service', 'flag'], axis=1)
-    df_train = df.sample(frac=0.05, random_state=42)
-    df_test = df.sample(frac=0.05, random_state=41)
+    df_train = df.sample(frac=0.1, random_state=42)
+    df_check = df.sample(frac=0.1, random_state=41)
+    df_test = df.sample(frac=0.1, random_state=40)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
+    x_ch = df_check.drop('label', axis=1)
+    t_ch = df_check['label']
     x_tes = df_test.drop('label', axis=1)
     t_tes = df_test['label']
-    return x_trai, t_trai, x_tes, t_tes
+    return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
 
 parser = argparse.ArgumentParser(description="説明をここに書く")
 parser.add_argument("-s","--std", type=int, default=0, help="0で標準化")
@@ -79,14 +84,16 @@ args = parser.parse_args()
 dataset_name = args.data  # ここを 'iris', 'wine', 'digits', 'breast_cancer' , 'kdd99'のいずれかに変える
 output_file = args.data+ "_"+str(args.output)+".txt"
 with open(output_file, 'w') as f:
-    f.write(f"標準化: {args.std}\n")
+    f.write(f"標準化(0で有効): {args.std}\n")
     f.write(f"データセット: {args.data}\n")
     f.write(f"打ち切り学習回数: {format(svm_iter, '.1e')}\n")
+    f.write(f'r_range = {r_range}\n')
     f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
     f.write(f"偵察バチのLIMIT: {LIMIT}\n")
     f.write(f"サイクル数: {CYCLES}\n")
     f.write(f"試行回数: {ex_cycle}\n")
 STD = args.std#0で標準化有
+std_scaler = StandardScaler()
 # データセットのロード
 if dataset_name == 'iris':
     dataset = load_iris()
@@ -102,7 +109,7 @@ elif dataset_name == 'cancer':
     dataset = load_breast_cancer()
     default_accuracy = 0.9766081871345029
 elif dataset_name == 'kdd99':
-    x_train, t_train, x_test, t_test = load_kdd99()
+    x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
     default_accuracy = 0.9978543378810575
 else:
     raise ValueError("Invalid dataset name. Choose from 'iris', 'wine', 'digits', 'cancer'.")
@@ -113,15 +120,14 @@ if dataset_name != 'kdd99':
     df_dataset = pd.DataFrame(data = dataset.data,columns=dataset.feature_names)
     x_train, x_test, t_train, t_test = train_test_split(
     dataset.data, dataset.target, test_size=0.3, random_state=0)
-
-std_scaler = StandardScaler()
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
 x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
-
+if dataset_name == 'kdd99':
+   x_end_std = std_scaler.transform(x_end)
 
 # 評価関数
-def evaluate_function(solution):
+def evaluate_function(solution,flag):
     global svm_time
     global STD
     s_svm_time = time.perf_counter() 
@@ -137,14 +143,18 @@ def evaluate_function(solution):
                       gamma = solution[2], coef0 = solution[3], degree = round(solution[4]),verbose=DEBAG,max_iter= svm_iter)
     else:
         print("カーネル関数エラー")
-    
-    if STD == 0:
-        svc.fit(x_train_std, t_train)
-        predictions = svc.predict(x_test_std)
+    if flag == 1:
+         svc.fit(x_train_std, t_train)#学習セット
+         predictions = svc.predict(x_end_std)
+         accuracy = accuracy_score(t_end, predictions)
+    elif STD == 0:
+         svc.fit(x_train_std, t_train)#学習セット
+         predictions = svc.predict(x_test_std)#検証セット
+         accuracy = accuracy_score(t_test, predictions)
     else:
         svc.fit(x_train, t_train)
         predictions = svc.predict(x_test)
-    accuracy = accuracy_score(t_test, predictions)
+        accuracy = accuracy_score(t_test, predictions)
 
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
@@ -210,7 +220,7 @@ def bee(i, solutions, fitness, trials):
             return
     else:#カーネル関数の更新
         roulette_kernel(new_solution,solutions)
-    new_fitness = evaluate_function(new_solution)
+    new_fitness = evaluate_function(new_solution,0)
     if new_fitness > fitness[i]:
         solutions[i] = new_solution
         fitness[i] = new_fitness
@@ -240,7 +250,7 @@ for e in range(ex_cycle):
     s_all_time = time.perf_counter()
     for i in range(COLONY_SIZE):
         solutions[i] = initialize_solution()
-        fitness[i] = evaluate_function(solutions[i])
+        fitness[i] = evaluate_function(solutions[i],0)
         
         if fitness[i] > best_fitness:
             best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
@@ -275,7 +285,7 @@ for e in range(ex_cycle):
                     r_range[0] + r_range[1] - solutions[i][3],
                     degree_range[0] + degree_range[1] - solutions[i][4]
                 ]
-                fitness[i] = evaluate_function(solutions[i])
+                fitness[i] = evaluate_function(solutions[i],0)
             
             # if new_fitness is None:  # タイムアウトの場合は次に進む
             #     continue
@@ -285,7 +295,9 @@ for e in range(ex_cycle):
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
         max_index = np.where(fitness == best_fitness)[0][0]
         best_solution = solutions[max_index]
-        
+        #ここにテストセットで分類精度を検証するプログラムを記述（これが最終的な分類精度)
+        if dataset_name == 'kdd99':
+           best_fitness= evaluate_function(best_solution,1)
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
 
