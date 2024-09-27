@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 import time
 import concurrent.futures
 import argparse
@@ -42,10 +43,10 @@ DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 50#サイクル数
+CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 3
+ex_cycle = 10
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -228,7 +229,6 @@ def bee(i, solutions, fitness, trials):
     else:
         trials[i] += 1
 # ルーレット選択用関数(作るかも)
-
 #ABCアルゴリズム
 best_box = []
 All_time = []
