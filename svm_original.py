@@ -18,6 +18,7 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 学習セット、検証セット、テストセットでの分割(済)
 複数のグラフを重ねて表示(済)
 
+ルーレット選択の式が少し違うかも
 パラメータcoef0の範囲（実験して良さそうな値出す)
 分類精度をちゃんと算出する
 初期化の工夫
@@ -26,15 +27,15 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
 svm_time = 0 #時間測定用
-svm_iter = int(1.0e7)#制限なし　＝　−１
-DEBAG = False #True or False
+svm_iter = int(1.0e9)#制限なし　＝　−１
+DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 10#サイクル数
+CYCLES = 500#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 1
+ex_cycle = 2
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -99,7 +100,7 @@ def evaluate_function(solution,flag):
     #print(f"評価中",solution) #デバッグ用    
     svc = svm.SVC(kernel='rbf',  C = solution[0]*(C_range[1]- C_range[0]) + C_range[0],
                   gamma = solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
-                  verbose=DEBAG,max_iter= svm_iter)
+                  verbose=DEBUG,max_iter= svm_iter)
     selected_features = solution[2:] >= 0.5
     if np.sum(selected_features) == 0:
         return 0 
@@ -118,8 +119,8 @@ def evaluate_function(solution,flag):
     return  1/(2-accuracy)
 def bee(i, solutions, fitness, trials):
     new_solution = solutions[i].copy()
-    j = np.random.randint(0, new_solution[0] + 1)
-    k = np.random.randint(0, COLONY_SIZE)
+    j = np.random.randint(0, DIM)#更新次元
+    k = np.random.randint(0, COLONY_SIZE)#ランダムな個体
     while k == i:
         k = np.random.randint(0, COLONY_SIZE)
     new_solution[j] = solutions[i][j] + np.random.uniform(-1, 1) * (solutions[i][j] - solutions[k][j])

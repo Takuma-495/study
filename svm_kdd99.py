@@ -32,7 +32,7 @@ svm_time = 0 #時間測定用
 svm_iter = int(1.0e7)#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
-COLONY_SIZE = 2#コロニーサイズ/2(偶数整数)
+COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
@@ -174,7 +174,7 @@ def bee(func_i, solutions, fitness, trials):
 
     """
     new_solution = solutions[func_i].copy()
-    j = np.random.randint(0, new_solution[0] + 1)
+    j = np.random.randint(0, new_solution[0] + 1)#カーネル関数によって次元が変わる
     if j != 0:
         k = np.random.randint(0, COLONY_SIZE)
         while k == func_i:
