@@ -9,9 +9,7 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import time
-import concurrent.futures
 import argparse
 np.set_printoptions(precision=5,suppress=True,floatmode='maxprec_equal')
 """
@@ -21,7 +19,6 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 標準化したほうがいいデータとしないほうがいいデータがある
 →標準化の有無を指定出来たほうがいい(済)
 ※irisはしないほうがいい
-kdd99はしたほうが良かった
 分類精度をちゃんと算出する
 多項式カーネルかつ特定のパラメータセットでは計算量が膨大になる(評価困難)
 →d(1-3)に変更(済)
@@ -41,42 +38,12 @@ svm_time = 0 #時間測定用
 svm_iter = int(1.0e7)#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
-COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
+COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 500#サイクル数
+CYCLES = 50#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
 ex_cycle = 10
-def load_kdd99():
-    url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
-    col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
-                 "dst_bytes", "land", "wrong_fragment", "urgent",
-                 "hot", "num_failed_logins", "logged_in", "num_compromised",
-                 "root_shell", "su_attempted", "num_root",
-                 "num_file_creations", "num_shells", "num_access_files",
-                 "num_outbound_cmds", "is_host_login",
-                 "is_guest_login", "count", "srv_count", "serror_rate",
-                 "srv_serror_rate", "rerror_rate", "srv_rerror_rate",
-                 "same_srv_rate", "diff_srv_rate", "srv_diff_host_rate",
-                 "dst_host_count", "dst_host_srv_count",
-                 "dst_host_same_srv_rate", "dst_host_diff_srv_rate",
-                 "dst_host_same_src_port_rate", "dst_host_srv_diff_host_rate",
-                 "dst_host_serror_rate", "dst_host_srv_serror_rate",
-                 "dst_host_rerror_rate", "dst_host_srv_rerror_rate", "label"]
-
-    df = pd.read_csv(url, names=col_names)
-    df= df.drop(['protocol_type', 'service', 'flag'], axis=1)
-    df_train = df.sample(frac=0.1, random_state=42)
-    df_check = df.sample(frac=0.1, random_state=41)
-    df_test = df.sample(frac=0.1, random_state=40)
-    x_trai = df_train.drop('label', axis=1)
-    t_trai = df_train['label']
-    x_ch = df_check.drop('label', axis=1)
-    t_ch = df_check['label']
-    x_tes = df_test.drop('label', axis=1)
-    t_tes = df_test['label']
-    return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
-
 parser = argparse.ArgumentParser(description="説明をここに書く")
 parser.add_argument("-s","--std", type=int, default=0, help="0で標準化")
 parser.add_argument("-d","--data", type=str, required=True, help="データセットネーム")
@@ -120,7 +87,7 @@ std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータ�
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
 x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
 # 評価関数
-def evaluate_function(solution,flag):
+def evaluate_function(solution):
     global svm_time
     global STD
     s_svm_time = time.perf_counter() 
@@ -136,14 +103,10 @@ def evaluate_function(solution,flag):
                       gamma = solution[2], coef0 = solution[3], degree = round(solution[4]),verbose=DEBAG,max_iter= svm_iter)
     else:
         print("カーネル関数エラー")
-    if flag == 1:
-         svc.fit(x_train_std, t_train)#学習セット
-         predictions = svc.predict(x_end_std)
-         accuracy = accuracy_score(t_end, predictions)
-    elif STD == 0:
-         svc.fit(x_train_std, t_train)#学習セット
-         predictions = svc.predict(x_test_std)#検証セット
-         accuracy = accuracy_score(t_test, predictions)
+    if STD == 0:
+        svc.fit(x_train_std, t_train)#学習セット
+        predictions = svc.predict(x_test_std)#検証セット
+        accuracy = accuracy_score(t_test, predictions)
     else:
         svc.fit(x_train, t_train)
         predictions = svc.predict(x_test)
@@ -153,17 +116,7 @@ def evaluate_function(solution,flag):
     svm_time += e_svm_time - s_svm_time
 
     return  1/(2-accuracy)
-
-#タイムアウト付き評価関数
-def evaluate_function_with_timeout(solution, timeout=5):
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(evaluate_function, solution)
-        try:
-            result = future.result(timeout=timeout)
-            return result
-        except concurrent.futures.TimeoutError:
-            print("処理がタイムアウトしました")
-            return None
+#カーネル関数更新、（ルーレット選択)
 def roulette_kernel(new_solution,solutions):
     k = np.random.randint(0, COLONY_SIZE)
     while solutions[i][0] != solutions[k][0] and k == i :
@@ -173,6 +126,7 @@ def roulette_kernel(new_solution,solutions):
     else :
         trials[i] += 1
     return 
+#カーネル関数更新、（ランダム)
 def random_kernel(new_solution): 
     temp = new_solution[j]
     while  new_solution[j] != temp:
@@ -213,17 +167,21 @@ def bee(i, solutions, fitness, trials):
             return
     else:#カーネル関数の更新
         roulette_kernel(new_solution,solutions)
-    new_fitness = evaluate_function(new_solution,0)
+    new_fitness = evaluate_function(new_solution)
     if new_fitness > fitness[i]:
         solutions[i] = new_solution
         fitness[i] = new_fitness
         trials[i] = 0
     else:
         trials[i] += 1
-# ルーレット選択用関数(作るかも)
 #ABCアルゴリズム
 best_box = []
 All_time = []
+fig, ax = plt.subplots()
+ax.set_title('Best Fitness over Generations')
+ax.set_xlabel('Generation')
+ax.set_ylabel('Best Fitness')
+ax.grid(True)
 for e in range(ex_cycle):
     with open(output_file, 'a') as f:
         f.write("###############\n\n")
@@ -242,7 +200,7 @@ for e in range(ex_cycle):
     s_all_time = time.perf_counter()
     for i in range(COLONY_SIZE):
         solutions[i] = initialize_solution()
-        fitness[i] = evaluate_function(solutions[i],0)
+        fitness[i] = evaluate_function(solutions[i])
         
         if fitness[i] > best_fitness:
             best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
@@ -272,16 +230,12 @@ for e in range(ex_cycle):
                 solutions[i] = [
                     np.random.choice(kernels),
                     C_range[0] + C_range[1] - solutions[i][1],
-                    C_range[0] + C_range[1] - solutions[i][1],
                     gamma_range[0] + gamma_range[1] - solutions[i][2],
                     r_range[0] + r_range[1] - solutions[i][3],
                     degree_range[0] + degree_range[1] - solutions[i][4]
                 ]
-                fitness[i] = evaluate_function(solutions[i],0)
-            
-            # if new_fitness is None:  # タイムアウトの場合は次に進む
-            #     continue
-            trials[i] = 0
+                fitness[i] = evaluate_function(solutions[i])
+                trials[i] = 0
         
         best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
@@ -314,19 +268,16 @@ for e in range(ex_cycle):
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
     # best_fitness の推移をグラフで描画
-    plt.figure()
-    plt.plot(range(1, CYCLES + 1), fitness_history, marker='o')
-    plt.title('Best Fitness over Generations')
-    plt.xlabel('Generation')
-    plt.ylabel('Best Fitness')
-    plt.grid(True)
-    #plt.show()
-    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
-    # すべての個体の出力
+     # すべての個体の出力
     for i in range(COLONY_SIZE):
         print(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}")
         with open(output_file, 'a') as f:
-         f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
+            f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
+    ax.plot(range(1, CYCLES + 1), fitness_history,label = str(e+1))
+#plt.show()
+ax.legend(loc=0) 
+plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
+   
 with open(output_file, 'a') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {default_accuracy}\n")

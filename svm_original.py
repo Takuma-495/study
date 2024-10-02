@@ -1,15 +1,9 @@
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_wine
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import time
 import argparse
 np.set_printoptions(precision=5,suppress=True,floatmode='maxprec_equal')
@@ -17,35 +11,30 @@ np.set_printoptions(precision=5,suppress=True,floatmode='maxprec_equal')
 課題
 カーネル関数によって更新パラメータを制御（済)
 degreeの値が変わらなかったらもう一度個体生成(済)
-標準化したほうがいいデータとしないほうがいいデータがある
-→標準化の有無を指定出来たほうがいい(済)
-※irisはしないほうがいい
-kdd99はしたほうが良かった
-分類精度をちゃんと算出する
-多項式カーネルかつ特定のパラメータセットでは計算量が膨大になる(評価困難)
-→d(1-3)に変更(済)
-初期化の工夫
+標準化の有無の指定(済)
+多項式カーネルかつ特定のパラメータセットでは計算量が膨大になる(評価困難)→d(1-3)に変更(済)
 ルーレット選択の実装(済)
 実験を複数回やってそこから統計的な値を出す機能の追加(済)
-学習セット、検証セット、テストセットでの分割
-パラメータの範囲（実験して良さそうな値出す)
+学習セット、検証セット、テストセットでの分割(済)
+複数のグラフを重ねて表示(済)
+
+パラメータcoef0の範囲（実験して良さそうな値出す)
+分類精度をちゃんと算出する
+初期化の工夫
 """
 # SVMのパラメータ範囲を設定
-kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-r_range = (-10, 10)#(-10, 10)
-degree_range = (1, 3) #ここが４，５だと処理終わらなくなる #(1, 3)
 svm_time = 0 #時間測定用
 svm_iter = int(1.0e7)#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
-COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
+COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 500#サイクル数
-DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
+CYCLES = 10#サイクル数
+DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 10
+ex_cycle = 1
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -78,16 +67,15 @@ def load_kdd99():
 
 parser = argparse.ArgumentParser(description="説明をここに書く")
 parser.add_argument("-s","--std", type=int, default=0, help="0で標準化")
-parser.add_argument("-d","--data", type=str, required=True, help="データセットネーム")
+parser.add_argument("-d","--data", type=str,default ="kdd99", help="データセットネーム")
 parser.add_argument("-o", "--output", default= 0, help="ファイルの枝番とか")
 args = parser.parse_args()
 dataset_name = args.data  # ここを 'iris', 'wine', 'digits', 'breast_cancer' , 'kdd99'のいずれかに変える
-output_file = args.data+ "_"+str(args.output)+".txt"
-with open(output_file, 'w') as f:
+output_file = args.data+ "_"+str(args.output)+"-ori"+".txt"
+with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"標準化(0で有効): {args.std}\n")
     f.write(f"データセット: {args.data}\n")
     f.write(f"打ち切り学習回数: {format(svm_iter, '.1e')}\n")
-    f.write(f'r_range = {r_range}\n')
     f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
     f.write(f"偵察バチのLIMIT: {LIMIT}\n")
     f.write(f"サイクル数: {CYCLES}\n")
@@ -108,85 +96,34 @@ def evaluate_function(solution,flag):
     global svm_time
     global STD
     s_svm_time = time.perf_counter() 
-    #print(f"評価中",solution) #デバッグ用
-    if solution[0] == 1:
-        svc = svm.SVC(kernel='linear', C = solution[1],verbose=DEBAG,max_iter= svm_iter)
-    elif solution[0] == 2:
-        svc = svm.SVC(kernel='rbf',  C = solution[1],  gamma = solution[2],verbose=DEBAG,max_iter= svm_iter)
-    elif solution[0] == 3:
-        svc = svm.SVC(kernel='sigmoid',C = solution[1],  gamma = solution[2], coef0 = solution[3],verbose=DEBAG,max_iter= svm_iter)
-    elif solution[0] == 4:
-        svc = svm.SVC(kernel='poly',C = solution[1],
-                      gamma = solution[2], coef0 = solution[3], degree = round(solution[4]),verbose=DEBAG,max_iter= svm_iter)
-    else:
-        print("カーネル関数エラー")
+    #print(f"評価中",solution) #デバッグ用    
+    svc = svm.SVC(kernel='rbf',  C = solution[0]*(C_range[1]- C_range[0]) + C_range[0],
+                  gamma = solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
+                  verbose=DEBAG,max_iter= svm_iter)
+    selected_features = solution[2:] >= 0.5
+    if np.sum(selected_features) == 0:
+        return 0 
     if flag == 1:
-         svc.fit(x_train_std, t_train)#学習セット
-         predictions = svc.predict(x_end_std)
-         accuracy = accuracy_score(t_end, predictions)
+        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
+        predictions = svc.predict(x_end_std[:, selected_features])
+        accuracy = accuracy_score(t_end, predictions)
     elif STD == 0:
-         svc.fit(x_train_std, t_train)#学習セット
-         predictions = svc.predict(x_test_std)#検証セット
-         accuracy = accuracy_score(t_test, predictions)
-    else:
-        svc.fit(x_train, t_train)
-        predictions = svc.predict(x_test)
+        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
+        predictions = svc.predict(x_test_std[:, selected_features])#検証セット
         accuracy = accuracy_score(t_test, predictions)
-
+    else: print("標準化をしてください\n")
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
 
     return  1/(2-accuracy)
-
-def roulette_kernel(new_solution,solutions):
-    k = np.random.randint(0, COLONY_SIZE)
-    while solutions[i][0] != solutions[k][0] and k == i :
-         k = np.random.randint(0, COLONY_SIZE)
-    if  np.random.rand() < fitness[k] /(fitness[i] + fitness[k]):
-        new_solution[0] = solutions[k][0]
-    else :
-        trials[i] += 1
-    return 
-def random_kernel(new_solution): 
-    temp = new_solution[j]
-    while  new_solution[j] != temp:
-          new_solution[j] =np.random.randint(1,5)
-#範囲制限関数
-def clip(index,solution):
-    if   index == 1:
-        return np.clip(solution[1], *C_range)
-    if index == 2:
-        return np.clip(solution[2], *gamma_range)
-    if index == 3:
-        return np.clip(solution[3], *r_range)
-    if index == 4:
-        return np.clip(solution[4], *degree_range)
-    return None
-
-# 解の初期化
-def initialize_solution():
-    C = np.random.uniform(*C_range)
-    kernel = np.random.choice(kernels)
-    gamma = np.random.uniform(*gamma_range)
-    r = np.random.uniform(*r_range)
-    degree = np.random.uniform(*degree_range)
-    return [kernel, C, gamma, r, degree]
-
 def bee(i, solutions, fitness, trials):
     new_solution = solutions[i].copy()
     j = np.random.randint(0, new_solution[0] + 1)
-    if j != 0:
+    k = np.random.randint(0, COLONY_SIZE)
+    while k == i:
         k = np.random.randint(0, COLONY_SIZE)
-        while k == i:
-            k = np.random.randint(0, COLONY_SIZE)
-        new_solution[j] = solutions[i][j] + np.random.uniform(-1, 1) * (solutions[i][j] - solutions[k][j])
-        new_solution[j] = clip(j, new_solution)
-        #degreeを丸めた値が更新後も変わらない場合は評価しない
-        if j == 4 and round(solutions[i][j]) == round(new_solution[j]):
-            trials[i] += 1
-            return
-    else:#カーネル関数の更新
-        roulette_kernel(new_solution,solutions)
+    new_solution[j] = solutions[i][j] + np.random.uniform(-1, 1) * (solutions[i][j] - solutions[k][j])
+    new_solution[j] = np.clip(new_solution[j],0,1)
     new_fitness = evaluate_function(new_solution,0)
     if new_fitness > fitness[i]:
         solutions[i] = new_solution
@@ -194,12 +131,16 @@ def bee(i, solutions, fitness, trials):
         trials[i] = 0
     else:
         trials[i] += 1
-# ルーレット選択用関数(作るかも)
 #ABCアルゴリズム
 best_box = []
 All_time = []
+fig, ax = plt.subplots()
+ax.set_title('Best Fitness over Generations')
+ax.set_xlabel('Generation')
+ax.set_ylabel('Best Fitness')
+ax.grid(True)
 for e in range(ex_cycle):
-    with open(output_file, 'a') as f:
+    with open(output_file, 'a', encoding='utf-8') as f:
         f.write("###############\n\n")
         f.write(f"{e+1}試行目\n\n")
         f.write("###############\n")
@@ -215,19 +156,18 @@ for e in range(ex_cycle):
     # 解の初期化
     s_all_time = time.perf_counter()
     for i in range(COLONY_SIZE):
-        solutions[i] = initialize_solution()
+        solutions[i] = np.random.rand(DIM)
         fitness[i] = evaluate_function(solutions[i],0)
-        
+       
         if fitness[i] > best_fitness:
             best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
             best_solution = solutions[i]
-            trials[i] = 0
-        with open(output_file, 'a') as f:
+        with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"初期化{i+1} , Fitness:{fitness[i]}\n")
             f.write(f"{solutions[i]}\n")
         print(f"初期化{i} ", "Fitness:", fitness[i])
         print(solutions[i])
-    
+   
     # ABC   
     for _ in range(CYCLES):
         # 働きバチ
@@ -243,19 +183,10 @@ for e in range(ex_cycle):
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
-                solutions[i] = [
-                    np.random.choice(kernels),
-                    C_range[0] + C_range[1] - solutions[i][1],
-                    C_range[0] + C_range[1] - solutions[i][1],
-                    gamma_range[0] + gamma_range[1] - solutions[i][2],
-                    r_range[0] + r_range[1] - solutions[i][3],
-                    degree_range[0] + degree_range[1] - solutions[i][4]
-                ]
-                fitness[i] = evaluate_function(solutions[i],0)
-            
-            # if new_fitness is None:  # タイムアウトの場合は次に進む
-            #     continue
-            trials[i] = 0
+                for j in range(DIM):
+                    solutions[i][j] = 1 - solutions[i][j]      
+                fitness[i] = evaluate_function(solutions[i],0)      
+                trials[i] = 0
         
         best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
@@ -266,7 +197,7 @@ for e in range(ex_cycle):
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
         # テキストデータをファイルに書き込む
-        with open(output_file, 'a') as f:
+        with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"Gen: {str(_ + 1)}, Best: {str(2 - (1 / best_fitness))}\n")
             f.write(str(best_solution) + "\n")   
     e_all_time = time.perf_counter()
@@ -281,26 +212,21 @@ for e in range(ex_cycle):
     print(f"実行時間: {execution_time:.4f}秒")
     print(f"SVMの実行時間: {svm_time:.4f}秒")
     #print(f"デフォルト実行時間: {time:.4f}秒")
-    with open(output_file, 'a') as f:
+    with open(output_file, 'a', encoding='utf-8') as f:
         f.write(f"Best Solution: {str(best_solution)}\nBest Fitness: {str(2 - (1 / best_fitness))}\n")
         f.write(f"default Fitness: {default_accuracy}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
-    # best_fitness の推移をグラフで描画
-    plt.figure()
-    plt.plot(range(1, CYCLES + 1), fitness_history, marker='o')
-    plt.title('Best Fitness over Generations')
-    plt.xlabel('Generation')
-    plt.ylabel('Best Fitness')
-    plt.grid(True)
-    #plt.show()
-    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
-    # すべての個体の出力
+       # すべての個体の出力
     for i in range(COLONY_SIZE):
         print(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}")
-        with open(output_file, 'a') as f:
-         f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
-with open(output_file, 'a') as f:
+        with open(output_file, 'a', encoding='utf-8') as f:
+            f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
+    ax.plot(range(1, CYCLES + 1), fitness_history,label = str(e+1))
+#plt.show()
+ax.legend(loc=0)
+plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
+with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {default_accuracy}\n")
     f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")      

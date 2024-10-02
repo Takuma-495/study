@@ -9,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import time
 import concurrent.futures
 import argparse
@@ -41,7 +40,7 @@ svm_time = 0 #時間測定用
 svm_iter = int(1.0e7)#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
-COLONY_SIZE = 20#コロニーサイズ/2(偶数整数)
+COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
@@ -280,16 +279,12 @@ for e in range(ex_cycle):
                 solutions[i] = [
                     np.random.choice(kernels),
                     C_range[0] + C_range[1] - solutions[i][1],
-                    C_range[0] + C_range[1] - solutions[i][1],
                     gamma_range[0] + gamma_range[1] - solutions[i][2],
                     r_range[0] + r_range[1] - solutions[i][3],
                     degree_range[0] + degree_range[1] - solutions[i][4]
                 ]
                 fitness[i] = evaluate_function(solutions[i],0)
-            
-            # if new_fitness is None:  # タイムアウトの場合は次に進む
-            #     continue
-            trials[i] = 0
+                trials[i] = 0
         
         best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
