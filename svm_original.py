@@ -27,7 +27,7 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
 svm_time = 0 #時間測定用
-svm_iter = int(1.0e9)#制限なし　＝　−１
+svm_iter = -1#int(1.0e9)#制限なし　＝　−１
 DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
@@ -85,7 +85,7 @@ STD = args.std#0で標準化有
 std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-default_accuracy = 0.9978543378810575
+default_accuracy = 0.9983603902676005
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
@@ -184,8 +184,7 @@ for e in range(ex_cycle):
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
-                for j in range(DIM):
-                    solutions[i][j] = 1 - solutions[i][j]      
+                solutions[i] = np.random.rand(DIM)#ランダム  
                 fitness[i] = evaluate_function(solutions[i],0)      
                 trials[i] = 0
         
