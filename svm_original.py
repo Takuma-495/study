@@ -135,11 +135,11 @@ def bee(i, solutions, fitness, trials):
 #ABCアルゴリズム
 best_box = []
 All_time = []
-fig, ax = plt.subplots()
-ax.set_title('Best Fitness over Generations')
-ax.set_xlabel('Generation')
-ax.set_ylabel('Best Fitness')
-ax.grid(True)
+#fig, ax = plt.subplots()
+#ax.set_title('Best Fitness over Generations')
+#ax.set_xlabel('Generation')
+#ax.set_ylabel('Best Fitness')
+#ax.grid(True)
 for e in range(ex_cycle):
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write("###############\n\n")
@@ -222,10 +222,14 @@ for e in range(ex_cycle):
         print(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}")
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
-    ax.plot(range(1, CYCLES + 1), fitness_history,label = str(e+1))
-#plt.show()
-ax.legend(loc=0)
-plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
+    plt.figure()
+    plt.plot(range(1, CYCLES + 1), fitness_history, )
+    plt.title('Best Fitness over Generations')
+    plt.xlabel('Generation')
+    plt.ylabel('Best Fitness')
+    plt.grid(True)
+    #plt.show()
+    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {default_accuracy}\n")
