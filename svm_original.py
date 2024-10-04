@@ -91,6 +91,18 @@ std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータ�
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
 x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
 x_end_std = std_scaler.transform(x_end)
+#ルーレット選択
+def roulette_wheel_selection(fitness):
+    total_fitness = np.sum(fitness)
+    if total_fitness == 0:
+        # フィットネスが全て0の場合、ランダムに選択
+        return np.random.randint(len(fitness))
+    probabilities = fitness / total_fitness
+    cumulative_probabilities = np.cumsum(probabilities)
+    r = np.random.rand()
+    # np.searchsorted を使って高速にインデックスを取得
+    selected_index = np.searchsorted(cumulative_probabilities, r)
+    return selected_index
 
 # 評価関数
 def evaluate_function(solution,flag):
@@ -178,8 +190,8 @@ for e in range(ex_cycle):
         # 追従バチ
         sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
-            if np.random.rand() < fitness[i] / sum_fitness:
-                bee(i, solutions, fitness, trials)
+            selected = roulette_wheel_selection(fitness)
+            bee(selected, solutions, fitness, trials)
 
         # 偵察バチ
         for i in range(COLONY_SIZE):
@@ -192,14 +204,14 @@ for e in range(ex_cycle):
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
         max_index = np.where(fitness == best_fitness)[0][0]
         best_solution = solutions[max_index]
-        #ここにテストセットで分類精度を検証するプログラムを記述（これが最終的な分類精度)
-        best_fitness= evaluate_function(best_solution,1)
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
         # テキストデータをファイルに書き込む
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"Gen: {str(_ + 1)}, Best: {str(2 - (1 / best_fitness))}\n")
-            f.write(str(best_solution) + "\n")   
+            f.write(str(best_solution) + "\n") 
+    #ここにテストセットで分類精度を検証するプログラムを記述（これが最終的な分類精度)
+    best_fitness= evaluate_function(best_solution,1) 
     e_all_time = time.perf_counter()
     execution_time = e_all_time - s_all_time
     best_box.append(2 - (1 / best_fitness))

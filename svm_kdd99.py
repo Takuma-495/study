@@ -196,13 +196,13 @@ def bee(func_i, solutions, fitness, trials):
         trials[func_i] += 1
 # ルーレット選択用関数(作るかも)
 #ABCアルゴリズム
-best_box = []
+best_box = []#各試行の最良値
 All_time = []
 fig, ax = plt.subplots()
-ax.set_title('Best Fitness over Generations')
-ax.set_xlabel('Generation')
-ax.set_ylabel('Best Fitness')
-ax.grid(True)
+#ax.set_title('Best Fitness over Generations')
+#ax.set_xlabel('Generation')
+#ax.set_ylabel('Best Fitness')
+#ax.grid(True)
 for e in range(EX_CYCLE):
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write("###############\n\n")
@@ -262,18 +262,19 @@ for e in range(EX_CYCLE):
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
         max_index = np.where(fitness == best_fitness)[0][0]
         best_solution = solutions[max_index]
-        #ここにテストセットで分類精度を検証するプログラムを記述（これが最終的な分類精度)
-        best_fitness= evaluate_function(best_solution,1)
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
         # テキストデータをファイルに書き込む
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"Gen: {str(_ + 1)}, Best: {str(2 - (1 / best_fitness))}\n")
-            f.write(str(best_solution) + "\n")   
+            f.write(str(best_solution) + "\n") 
+    #ここにテストセットで分類精度を検証するプログラムを記述（これが最終的な分類精度)
+    best_fitness= evaluate_function(best_solution,1)   
     e_all_time = time.perf_counter()
     execution_time = e_all_time - s_all_time
     best_box.append(2 - (1 / best_fitness))
     All_time.append(execution_time)
+    
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
@@ -293,10 +294,14 @@ for e in range(EX_CYCLE):
         print(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}")
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
-    ax.plot(range(1, CYCLES + 1), fitness_history,label = str(e+1))
-#plt.show()
-ax.legend(loc=0)
-plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
+    plt.figure()
+    plt.plot(range(1, CYCLES + 1), fitness_history, )
+    plt.title('Best Fitness over Generations')
+    plt.xlabel('Generation')
+    plt.ylabel('Best Fitness')
+    plt.grid(True)
+    #plt.show()
+    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {DEFAULT_ACCURACY}\n")
