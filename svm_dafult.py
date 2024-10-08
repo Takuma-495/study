@@ -6,22 +6,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import time
 np.set_printoptions(precision=5,suppress=True,floatmode='maxprec_equal')
 """
-課題
-カーネル関数によって更新パラメータを制御（済)
-degreeの値が変わらなかったらもう一度個体生成(済)
-標準化したほうがいいデータとしないほうがいいデータがある
-→標準化の有無を指定出来たほうがいい
-irisはしないほうがいい
-分類精度をちゃんと算出する
-kdd99はしたほうが良かった
-多項式カーネルかつ特定のパラメータセットでは計算量が膨大になる(評価困難)
-初期化の工夫
+デフォルト値を出すプログラム
 """
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
@@ -77,7 +68,8 @@ if dataset_name != 'kdd99':
     x_train, x_test, t_train, t_test = train_test_split(
     dataset.data, dataset.target, test_size=0.3, random_state=0)
 
-std_scaler = StandardScaler()
+std_scaler = MinMaxScaler()
+#std_scaler = StandardScaler()
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
 x_test_std = std_scaler.transform(x_test)    # テストデータの標準化

@@ -1,6 +1,7 @@
 from sklearn.metrics import accuracy_score
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,7 +19,8 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 学習セット、検証セット、テストセットでの分割(済)
 複数のグラフを重ねて表示(済)
 
-ルーレット選択の式が少し違うかも
+最良値を保存するプログラム()
+ルーレット選択の式が少し違うかも(済)
 パラメータcoef0の範囲（実験して良さそうな値出す)
 分類精度をちゃんと算出する
 初期化の工夫
@@ -82,7 +84,8 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"サイクル数: {CYCLES}\n")
     f.write(f"試行回数: {ex_cycle}\n")
 STD = args.std#0で標準化有
-std_scaler = StandardScaler()
+std_scaler = MinMaxScaler()
+#std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 default_accuracy = 0.9983603902676005
@@ -128,8 +131,10 @@ def evaluate_function(solution,flag):
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
 
-    return  1/(2-accuracy)
+    return  1/(2-accuracy)#ただの評価値
 def bee(i, solutions, fitness, trials):
+    global best_fitness
+    global best_solution
     new_solution = solutions[i].copy()
     j = np.random.randint(0, DIM)#更新次元
     k = np.random.randint(0, COLONY_SIZE)#ランダムな個体
@@ -142,6 +147,9 @@ def bee(i, solutions, fitness, trials):
         solutions[i] = new_solution
         fitness[i] = new_fitness
         trials[i] = 0
+        if fitness[i] > best_fitness:
+            best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+            best_solution = solutions[i]
     else:
         trials[i] += 1
 #ABCアルゴリズム
@@ -186,24 +194,28 @@ for e in range(ex_cycle):
         # 働きバチ
         for i in range(COLONY_SIZE):
             bee(i, solutions, fitness, trials)
-
+           # if fitness[i] > best_fitness:
+            #        best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+             #       best_solution = solutions[i]
         # 追従バチ
         sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
             selected = roulette_wheel_selection(fitness)
             bee(selected, solutions, fitness, trials)
-
+            #if fitness[i] > best_fitness:
+             #       best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+              #      best_solution = solutions[i]
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
                 solutions[i] = np.random.rand(DIM)#ランダム  
                 fitness[i] = evaluate_function(solutions[i],0)      
                 trials[i] = 0
-        
-        best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
+                if fitness[i] > best_fitness:
+                    best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+                    best_solution = solutions[i]
+        #best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
-        max_index = np.where(fitness == best_fitness)[0][0]
-        best_solution = solutions[max_index]
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
         # テキストデータをファイルに書き込む
@@ -231,9 +243,9 @@ for e in range(ex_cycle):
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
        # すべての個体の出力
     for i in range(COLONY_SIZE):
-        print(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}")
+        print(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}")
         with open(output_file, 'a', encoding='utf-8') as f:
-            f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
+            f.write(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
     plt.plot(range(1, CYCLES + 1), fitness_history, )
     plt.title('Best Fitness over Generations')
@@ -241,7 +253,7 @@ for e in range(ex_cycle):
     plt.ylabel('Best Fitness')
     plt.grid(True)
     #plt.show()
-    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
+    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {default_accuracy}\n")

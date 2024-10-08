@@ -3,6 +3,7 @@ import argparse
 from sklearn.metrics import accuracy_score
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -85,7 +86,8 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"サイクル数: {CYCLES}\n")
     f.write(f"試行回数: {EX_CYCLE}\n")
 STD = args.std#0で標準化有
-std_scaler = StandardScaler()
+std_scaler = MinMaxScaler()
+#std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 DEFAULT_ACCURACY =  0.9983603902676005
@@ -173,6 +175,8 @@ def bee(func_i, solutions, fitness, trials):
     """解の更新
 
     """
+    global best_fitness
+    global best_solution
     new_solution = solutions[func_i].copy()
     j = np.random.randint(0, new_solution[0] + 1)#カーネル関数によって次元が変わる
     if j != 0:
@@ -192,6 +196,9 @@ def bee(func_i, solutions, fitness, trials):
         solutions[func_i] = new_solution
         fitness[func_i] = new_fitness
         trials[func_i] = 0
+        if fitness[i] > best_fitness:
+            best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+            best_solution = solutions[i]
     else:
         trials[func_i] += 1
 # ルーレット選択用関数(作るかも)
@@ -257,11 +264,11 @@ for e in range(EX_CYCLE):
                 ]
                 fitness[i] = evaluate_function(solutions[i],0)
                 trials[i] = 0
+                if fitness[i] > best_fitness:
+                     best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+                     best_solution = solutions[i]
 
-        best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
-        max_index = np.where(fitness == best_fitness)[0][0]
-        best_solution = solutions[max_index]
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
         # テキストデータをファイルに書き込む
