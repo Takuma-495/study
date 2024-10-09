@@ -37,7 +37,7 @@ LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 2
+ex_cycle = 1
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
