@@ -77,7 +77,7 @@ args = parser.parse_args()
 dataset_name = args.data
 output_file = args.data+ "_"+str(args.output)+".txt"
 with open(output_file, 'w', encoding='utf-8') as f:
-    f.write(f"標準化(0で有効): {args.std}\n")
+    f.write(f"正規化(0で有効): {args.std}\n")
     f.write(f"データセット: {args.data}\n")
     f.write(f"打ち切り学習回数: {format(svm_iter, '.1e')}\n")
     f.write(f'r_range = {r_range}\n')

@@ -76,7 +76,7 @@ args = parser.parse_args()
 dataset_name = args.data  # ここを 'iris', 'wine', 'digits', 'breast_cancer' , 'kdd99'のいずれかに変える
 output_file = args.data+ "_"+str(args.output)+"-ori"+".txt"
 with open(output_file, 'w', encoding='utf-8') as f:
-    f.write(f"標準化(0で有効): {args.std}\n")
+    f.write(f"正規化(0で有効): {args.std}\n")
     f.write(f"データセット: {args.data}\n")
     f.write(f"打ち切り学習回数: {format(svm_iter, '.1e')}\n")
     f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
@@ -126,12 +126,12 @@ def evaluate_function(solution,flag):
     elif STD == 0:
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_test_std[:, selected_features])#検証セット
-        accuracy = accuracy_score(t_test, predictions)
+        Miss = 1 - accuracy_score(t_test, predictions)
     else: print("標準化をしてください\n")
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
 
-    return  1/(2-accuracy)#ただの評価値
+    return  1/(1+Miss)#ただの評価値
 def bee(i, solutions, fitness, trials):
     global best_fitness
     global best_solution
