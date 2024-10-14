@@ -37,7 +37,7 @@ LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 1
+ex_cycle = 5
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -67,7 +67,68 @@ def load_kdd99():
     x_tes = df_test.drop('label', axis=1)
     t_tes = df_test['label']
     return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
+"""
+def load_kdd99():
+    url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
+    col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
+                    "dst_bytes", "land", "wrong_fragment", "urgent",
+                    "hot", "num_failed_logins", "logged_in", "num_compromised",
+                    "root_shell", "su_attempted", "num_root",
+                    "num_file_creations", "num_shells", "num_access_files",
+                    "num_outbound_cmds", "is_host_login",
+                    "is_guest_login", "count", "srv_count", "serror_rate",
+                    "srv_serror_rate", "rerror_rate", "srv_rerror_rate",
+                    "same_srv_rate", "diff_srv_rate", "srv_diff_host_rate",
+                    "dst_host_count", "dst_host_srv_count",
+                    "dst_host_same_srv_rate", "dst_host_diff_srv_rate",
+                    "dst_host_same_src_port_rate", "dst_host_srv_diff_host_rate",
+                    "dst_host_serror_rate", "dst_host_srv_serror_rate",
+                    "dst_host_rerror_rate", "dst_host_srv_rerror_rate", "label"]
 
+    df = pd.read_csv(url, names=col_names)
+    df= df.drop(['protocol_type', 'service', 'flag'], axis=1)
+    label_map = {
+            'normal.': 'normal',
+            'back.': 'DoS', 'land.': 'DoS', 'neptune.': 'DoS', 'pod.': 'DoS', 'smurf.': 'DoS', 'teardrop.': 'DoS',
+            'ipsweep.': 'Probe', 'nmap.': 'Probe', 'portsweep.': 'Probe', 'satan.': 'Probe',
+            'ftp_write.': 'R2L', 'guess_passwd.': 'R2L', 'imap.': 'R2L', 'multihop.': 'R2L', 'phf.': 'R2L', 'spy.': 'R2L', 'warezclient.': 'R2L', 'warezmaster.': 'R2L',
+            'buffer_overflow.': 'U2R', 'loadmodule.': 'U2R', 'perl.': 'U2R', 'rootkit.': 'U2R'
+        }
+
+    # ラベルをマッピング
+    df['label'] = df['label'].map(label_map)
+
+    # 各クラスから学習、検証、テストのサンプル数を指定
+    num_train = {'normal': 9746, 'DoS': 39158, 'Probe': 381, 'R2L': 112, 'U2R': 5}  # 各クラスからの学習セット数
+    num_val = {'normal': 9723, 'DoS': 39112, 'Probe': 438, 'R2L': 125, 'U2R': 5}        # 各クラスからの検証セット数
+    num_test = {'normal': 9781, 'DoS': 39101, 'Probe': 397, 'R2L': 117, 'U2R': 6}       # 各クラスからのテストセット数
+
+    # 学習セット、検証セット、テストセットの抽出
+    df_train = pd.DataFrame()
+    df_val = pd.DataFrame()
+    df_test = pd.DataFrame()
+
+    for label in num_train.keys():
+        df_label = df[df['label'] == label]
+        
+        # 学習セット
+        df_train = pd.concat([df_train, df_label.sample(n=min(num_train[label], len(df_label)), random_state=42)])
+        
+        # 検証セット
+        df_val = pd.concat([df_val, df_label.sample(n=min(num_val[label], len(df_label)), random_state=43)])
+        
+        # テストセット
+        df_test = pd.concat([df_test, df_label.sample(n=min(num_test[label], len(df_label)), random_state=44)])
+    x_train = df_train.drop('label', axis=1)  # 特徴データ
+    t_train = df_train['label']               # ラベル
+
+    x_check = df_val.drop('label', axis=1)
+    t_check = df_val['label']
+
+    x_test = df_test.drop('label', axis=1)
+    t_test = df_test['label']
+    return x_train, t_train, x_check, t_check, x_test, t_test
+"""
 parser = argparse.ArgumentParser(description="説明をここに書く")
 parser.add_argument("-s","--std", type=int, default=0, help="0で標準化")
 parser.add_argument("-d","--data", type=str,default ="kdd99", help="データセットネーム")
@@ -88,7 +149,7 @@ std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-default_accuracy = 0.9983603902676005
+default_accuracy = 0.9972
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
@@ -122,7 +183,7 @@ def evaluate_function(solution,flag):
     if flag == 1:
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_end_std[:, selected_features])
-        accuracy = accuracy_score(t_end, predictions)
+        Miss = accuracy_score(t_end, predictions)
     elif STD == 0:
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_test_std[:, selected_features])#検証セット
@@ -194,17 +255,11 @@ for e in range(ex_cycle):
         # 働きバチ
         for i in range(COLONY_SIZE):
             bee(i, solutions, fitness, trials)
-           # if fitness[i] > best_fitness:
-            #        best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
-             #       best_solution = solutions[i]
         # 追従バチ
         sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
             selected = roulette_wheel_selection(fitness)
             bee(selected, solutions, fitness, trials)
-            #if fitness[i] > best_fitness:
-             #       best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
-              #      best_solution = solutions[i]
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
@@ -247,6 +302,7 @@ for e in range(ex_cycle):
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
+    plt.ylim(0.9, 1)
     plt.plot(range(1, CYCLES + 1), fitness_history, )
     plt.title('Best Fitness over Generations')
     plt.xlabel('Generation')
