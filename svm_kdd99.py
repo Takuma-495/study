@@ -305,7 +305,7 @@ for e in range(EX_CYCLE):
             f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
     plt.plot(range(1, CYCLES + 1), fitness_history, )
-    plt.ylim(0.96, 1)
+    plt.ylim(0.995, 1)
     plt.title('Best Accuracy over Generations')
     plt.xlabel('Generation')
     plt.ylabel('Best Accuracy')

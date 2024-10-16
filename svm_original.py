@@ -304,7 +304,7 @@ for e in range(ex_cycle):
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
-    plt.ylim(0.96, 1)
+    plt.ylim(0.995, 1)
     plt.plot(range(1, CYCLES + 1), fitness_history, )
     plt.title('Best Accuracy over Generations')
     plt.xlabel('Generation')
