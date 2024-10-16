@@ -34,10 +34,10 @@ DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 500#サイクル数
+CYCLES = 50#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 5
+ex_cycle = 10
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -292,7 +292,8 @@ for e in range(ex_cycle):
     print(f"SVMの実行時間: {svm_time:.4f}秒")
     #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a', encoding='utf-8') as f:
-        f.write(f"Best Solution: {str(best_solution)}\nBest Fitness: {str(2 - (1 / best_fitness))}\n")
+        f.write(f"Best Solution: {', '.join(map(str, best_solution))}\n")
+        f.write(f"Best Fitness: {str(2 - (1 / best_fitness))}\n")
         f.write(f"default Fitness: {default_accuracy}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
@@ -305,9 +306,9 @@ for e in range(ex_cycle):
     plt.figure()
     plt.ylim(0.96, 1)
     plt.plot(range(1, CYCLES + 1), fitness_history, )
-    plt.title('Best Fitness over Generations')
+    plt.title('Best Accuracy over Generations')
     plt.xlabel('Generation')
-    plt.ylabel('Best Fitness')
+    plt.ylabel('Best Accuracy')
     plt.grid(True)
     #plt.show()
     plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
