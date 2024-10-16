@@ -183,7 +183,7 @@ def evaluate_function(solution,flag):
     if flag == 1:
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_end_std[:, selected_features])
-        Miss = accuracy_score(t_end, predictions)
+        Miss = 1 - accuracy_score(t_end, predictions)
     elif STD == 0:
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_test_std[:, selected_features])#検証セット
@@ -296,13 +296,14 @@ for e in range(ex_cycle):
         f.write(f"default Fitness: {default_accuracy}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
+        f.write(f"SVMの実行時間: {svm_time/3600:.4f}秒\n")
        # すべての個体の出力
     for i in range(COLONY_SIZE):
         print(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}")
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
-    plt.ylim(0.9, 1)
+    plt.ylim(0.96, 1)
     plt.plot(range(1, CYCLES + 1), fitness_history, )
     plt.title('Best Fitness over Generations')
     plt.xlabel('Generation')
@@ -313,7 +314,8 @@ for e in range(ex_cycle):
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {default_accuracy}\n")
-    f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")      
+    f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
+    f.write(f"平均実行時間: {(sum(All_time)/len(All_time))/3600:.4f}秒\n")    
 print(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
 print(f"default Fitness: {default_accuracy}\n")
 print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")

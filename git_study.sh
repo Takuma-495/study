@@ -11,7 +11,7 @@ COMMIT_MESSAGE="$1"
 
 # Gitの操作を実行
 echo "Staging all changes..."
-git add *
+git add -A
 
 echo "Committing with message: $COMMIT_MESSAGE"
 git commit -m "$COMMIT_MESSAGE"
