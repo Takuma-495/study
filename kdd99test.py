@@ -29,28 +29,10 @@ def load_kdd99():
 
     # ラベルをマッピング
     df['label'] = df['label'].map(label_map)
-
-    # 各クラスから学習、検証、テストのサンプル数を指定
-    num_train = {'normal': 9746, 'DoS': 39158, 'Probe': 381, 'R2L': 112, 'U2R': 5}  # 各クラスからの学習セット数
-    num_val = {'normal': 9723, 'DoS': 39112, 'Probe': 438, 'R2L': 125, 'U2R': 5}        # 各クラスからの検証セット数
-    num_test = {'normal': 9781, 'DoS': 39101, 'Probe': 397, 'R2L': 117, 'U2R': 6}       # 各クラスからのテストセット数
-
     # 学習セット、検証セット、テストセットの抽出
-    df_train = pd.DataFrame()
-    df_val = pd.DataFrame()
-    df_test = pd.DataFrame()
-
-    for label in num_train.keys():
-        df_label = df[df['label'] == label]
-        
-        # 学習セット
-        df_train = pd.concat([df_train, df_label.sample(n=min(num_train[label], len(df_label)), random_state=42)])
-        
-        # 検証セット
-        df_val = pd.concat([df_val, df_label.sample(n=min(num_val[label], len(df_label)), random_state=43)])
-        
-        # テストセット
-        df_test = pd.concat([df_test, df_label.sample(n=min(num_test[label], len(df_label)), random_state=44)])
+    df_train = df.sample(frac=0.1, random_state=42)
+    df_val = df.sample(frac=0.1, random_state=41)
+    df_test = df.sample(frac=0.1, random_state=39)
     x_train = df_train.drop('label', axis=1)  # 特徴データ
     t_train = df_train['label']               # ラベル
 
@@ -65,26 +47,14 @@ def load_kdd99():
 # データを読み込み
 x_train, t_train, x_check, t_check, x_test, t_test = load_kdd99()
 
-# 出力部分の追加
-# データの形状を出力
-print(f"x_train shape: {x_train.shape}")
-print(f"t_train shape: {t_train.shape}")
-print(f"x_check shape: {x_check.shape}")
-print(f"t_check shape: {t_check.shape}")
-print(f"x_test shape: {x_test.shape}")
-print(f"t_test shape: {t_test.shape}")
+# クラスごとのデータ数を表示する関数
+def print_class_distribution(t_train, t_check, t_test):
+    print("Training set class distribution:")
+    print(t_train.value_counts())
+    print("\nValidation set class distribution:")
+    print(t_check.value_counts())
+    print("\nTest set class distribution:")
+    print(t_test.value_counts())
 
-# 学習データの先頭部分を出力
-print("\n--- Training Data Sample ---")
-print(x_train.head())
-print(t_train.head())
-
-# 検証データの先頭部分を出力
-print("\n--- Validation Data Sample ---")
-print(x_check.head())
-print(t_check.head())
-
-# テストデータの先頭部分を出力
-print("\n--- Test Data Sample ---")
-print(x_test.head())
-print(t_test)
+# クラスごとのデータ数を表示
+print_class_distribution(t_train, t_check, t_test)

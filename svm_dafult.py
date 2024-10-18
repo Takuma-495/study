@@ -3,7 +3,8 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_wine
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
+import numpy as np
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
@@ -34,9 +35,19 @@ def load_kdd99():
 
     df = pd.read_csv(url, names=col_names)
     df= df.drop(['protocol_type', 'service', 'flag'], axis=1)
+    label_map = {
+            'normal.': 'normal',
+            'back.': 'DoS', 'land.': 'DoS', 'neptune.': 'DoS', 'pod.': 'DoS', 'smurf.': 'DoS', 'teardrop.': 'DoS',
+            'ipsweep.': 'Probe', 'nmap.': 'Probe', 'portsweep.': 'Probe', 'satan.': 'Probe',
+            'ftp_write.': 'R2L', 'guess_passwd.': 'R2L', 'imap.': 'R2L', 'multihop.': 'R2L', 'phf.': 'R2L', 'spy.': 'R2L', 'warezclient.': 'R2L', 'warezmaster.': 'R2L',
+            'buffer_overflow.': 'U2R', 'loadmodule.': 'U2R', 'perl.': 'U2R', 'rootkit.': 'U2R'
+        }
+
+    # ラベルをマッピング
+    df['label'] = df['label'].map(label_map)
     df_train = df.sample(frac=0.1, random_state=42)
     df_check = df.sample(frac=0.1, random_state=41)
-    df_test = df.sample(frac=0.1, random_state=40)
+    df_test = df.sample(frac=0.1, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
@@ -152,6 +163,69 @@ accuracy = accuracy_score(t_end, predictions)
 
 e_svm_time = time.perf_counter()
 svm_time += e_svm_time - s_svm_time
+# 正解ラベルと予測ラベルを「通常状態」と「攻撃状態」に再分類
+def map_labels(y):
+    return ['normal' if label == 'normal' else 'attack' for label in y]
+
+# 再分類されたラベル
+y_test_mapped = map_labels(t_end)
+y_pred_mapped = map_labels(predictions)
+
+# 混同行列の計算
+cm = confusion_matrix(y_test_mapped, y_pred_mapped, labels=['normal', 'attack'])
+
+# 混同行列から各値を抽出
+TN, FP, FN, TP = cm.ravel()
+
+print(f"True Positives (TP): {TP}")
+print(f"True Negatives (TN): {TN}")
+print(f"False Positives (FP): {FP}")
+print(f"False Negatives (FN): {FN}")
+
+# 検知率（再現率）
+detection_rate = recall_score(y_test_mapped, y_pred_mapped, pos_label='attack')
+
+# 誤警報率
+false_alarm_rate = FP / (TN + FP)
+
+# 適合率
+precision = precision_score(y_test_mapped, y_pred_mapped, pos_label='attack')
+
+# F値
+f1 = f1_score(y_test_mapped, y_pred_mapped, pos_label='attack')
+
+print(f"検知率: {detection_rate:.4f}")
+print(f"誤警報率: {false_alarm_rate:.4f}")
+print(f"適合率: {precision:.4f}")
+print(f"F1-Score: {f1:.4f}")
+
+# t_end と predictions が pandas.Series の場合に備えて iloc を使用
+incorrect_indices = [i for i in range(len(t_end)) if t_end.iloc[i] != predictions[i]]
+
+# 誤分類されたラベルを取得
+incorrect_labels = [(t_end.iloc[i], predictions[i]) for i in incorrect_indices]
+
+# 誤分類されたラベルを正解ラベルでソート
+sorted_incorrect_labels = sorted(incorrect_labels, key=lambda x: x[0])
+
+# ソート後の結果を表示
+print("誤分類したデータ (正解ラベルでソート):")
+for true_label, pred_label in sorted_incorrect_labels:
+    print(f"True: {true_label}, Predicted: {pred_label}")
+
+# 誤分類された "正解ラベル" の数をカウント
+true_label_counts = pd.Series([true_label for true_label, pred_label in incorrect_labels]).value_counts()
+
+# 誤分類された "予測ラベル" の数をカウント
+pred_label_counts = pd.Series([pred_label for true_label, pred_label in incorrect_labels]).value_counts()
+
+# 結果の表示 (各クラスの誤分類数)
+print("\nMisclassified True Labels:")
+print(true_label_counts)
+
+print("\nMisclassified Predicted Labels:")
+print(pred_label_counts)
+
 
 # 結果の出力
 print("Fitness:", accuracy)

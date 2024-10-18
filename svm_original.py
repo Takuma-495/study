@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from sklearn import svm
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
@@ -34,10 +34,86 @@ DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 50#サイクル数
+CYCLES = 5#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 10
+ex_cycle = 1
+def map_labels(y):
+    return ['normal' if label == 'normal' else 'attack' for label in y]
+def calc_and_write_data(pre):
+    # 再分類されたラベル
+    y_test_mapped = map_labels(t_end)
+    y_pred_mapped = map_labels(pre)
+
+    # 混同行列の計算
+    cm = confusion_matrix(y_test_mapped, y_pred_mapped, labels=['normal', 'attack'])
+
+    # 混同行列から各値を抽出
+    TN, FP, FN, TP = cm.ravel()
+    # 検知率（再現率）
+    detection_rate = recall_score(y_test_mapped, y_pred_mapped, pos_label='attack')
+    # 誤警報率
+    false_alarm_rate = FP / (TN + FP)
+    # 適合率
+    precision = precision_score(y_test_mapped, y_pred_mapped, pos_label='attack')
+    # F値
+    f1 = f1_score(y_test_mapped, y_pred_mapped, pos_label='attack')
+    # t_end と predictions が pandas.Series の場合に備えて iloc を使用
+    incorrect_indices = [i for i in range(len(t_end)) if t_end.iloc[i] != pre[i]]
+    # 誤分類されたラベルを取得
+    incorrect_labels = [(t_end.iloc[i], pre[i]) for i in incorrect_indices]
+    # 誤分類されたラベルを正解ラベルでソート
+    sorted_incorrect_labels = sorted(incorrect_labels, key=lambda x: x[0])
+    # 誤分類された "正解ラベル" の数をカウント
+    true_label_counts = pd.Series([true_label for true_label, pred_label in incorrect_labels]).value_counts()
+    # 誤分類された "予測ラベル" の数をカウント
+    pred_label_counts = pd.Series([pred_label for true_label, pred_label in incorrect_labels]).value_counts()
+    # ファイルに結果を書き込む
+    with open(output_file, 'a', encoding='utf-8') as f:
+
+        f.write(f"True Positives (TP): {TP}\n")
+        f.write(f"True Negatives (TN): {TN}\n")
+        f.write(f"False Positives (FP): {FP}\n")
+        f.write(f"False Negatives (FN): {FN}\n")
+
+        # 検知率（再現率）
+        f.write(f"検知率: {detection_rate:.4f}\n")
+        # 誤警報率
+        f.write(f"誤警報率: {false_alarm_rate:.4f}\n")
+        # 適合率
+        f.write(f"適合率: {precision:.4f}\n")
+        # F値
+        f.write(f"F値: {f1:.4f}\n")
+        # ソート後の結果をファイルに書き込み
+        f.write("誤分類したデータ (正解ラベルでソート):\n")
+        for true_label, pred_label in sorted_incorrect_labels:
+            f.write(f"True: {true_label}, Predicted: {pred_label}\n")
+
+        # 結果の表示 (各クラスの誤分類数)
+        f.write("\n誤分類(正解):\n")
+        f.write(true_label_counts.to_string() + "\n")
+
+        f.write("\n誤分類(予測):\n")
+        f.write(pred_label_counts.to_string() + "\n")
+def calc_and_write_accuracy(t_data,pre,accuracy,name):
+    # t_end と predictions が pandas.Series の場合に備えて iloc を使用
+    incorrect_indices = [i for i in range(len(t_data)) if t_data.iloc[i] != pre[i]]
+    # 誤分類されたラベルを取得
+    incorrect_labels = [(t_data.iloc[i], pre[i]) for i in incorrect_indices]
+    # 誤分類された "正解ラベル" の数をカウント
+    true_label_counts = pd.Series([true_label for true_label, pred_label in incorrect_labels]).value_counts()
+    # 誤分類された "予測ラベル" の数をカウント
+    pred_label_counts = pd.Series([pred_label for true_label, pred_label in incorrect_labels]).value_counts()
+    # ファイルに結果を書き込む
+    with open(output_file, 'a', encoding='utf-8') as f:
+
+        # 結果の表示 (各クラスの誤分類数)
+        f.write(f"\n------{name}-----\n")
+        f.write(f"精度: {accuracy}\n")
+        f.write("誤分類(正解):\n")
+        f.write(true_label_counts.to_string() + "\n")
+        f.write("\n誤分類(予測):\n")
+        f.write(pred_label_counts.to_string() + "\n")
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -55,11 +131,20 @@ def load_kdd99():
                  "dst_host_serror_rate", "dst_host_srv_serror_rate",
                  "dst_host_rerror_rate", "dst_host_srv_rerror_rate", "label"]
 
-    df = pd.read_csv(url, names=col_names)
-    df= df.drop(['protocol_type', 'service', 'flag'], axis=1)
-    df_train = df.sample(frac=0.1, random_state=42)
-    df_check = df.sample(frac=0.1, random_state=41)
-    df_test = df.sample(frac=0.1, random_state=40)
+    data_frame = pd.read_csv(url, names=col_names)
+    data_frame = data_frame.drop(['protocol_type', 'service', 'flag'], axis=1)
+    label_map = {
+            'normal.': 'normal',
+            'back.': 'DoS', 'land.': 'DoS', 'neptune.': 'DoS', 'pod.': 'DoS', 'smurf.': 'DoS', 'teardrop.': 'DoS',
+            'ipsweep.': 'Probe', 'nmap.': 'Probe', 'portsweep.': 'Probe', 'satan.': 'Probe',
+            'ftp_write.': 'R2L', 'guess_passwd.': 'R2L', 'imap.': 'R2L', 'multihop.': 'R2L', 'phf.': 'R2L', 'spy.': 'R2L', 'warezclient.': 'R2L', 'warezmaster.': 'R2L',
+            'buffer_overflow.': 'U2R', 'loadmodule.': 'U2R', 'perl.': 'U2R', 'rootkit.': 'U2R'
+        }
+    # ラベルをマッピング
+    data_frame['label'] = data_frame['label'].map(label_map)
+    df_train = data_frame.sample(frac=0.01, random_state=42)
+    df_check = data_frame.sample(frac=0.01, random_state=41)
+    df_test = data_frame.sample(frac=0.01, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
@@ -149,7 +234,7 @@ std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-default_accuracy = 0.9972
+default_accuracy = 0.9978543378810575
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
@@ -184,6 +269,13 @@ def evaluate_function(solution,flag):
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_end_std[:, selected_features])
         Miss = 1 - accuracy_score(t_end, predictions)
+        calc_and_write_data(predictions)
+        train_predictions = svc.predict(x_train_std[:, selected_features])
+        train_accuracy = accuracy_score( t_train, train_predictions)
+        calc_and_write_accuracy(t_train,train_predictions,train_accuracy,"学習セット")
+        test_predictions = svc.predict(x_test_std[:, selected_features])
+        test_accuracy = accuracy_score(t_test, test_predictions)
+        calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
     elif STD == 0:
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_test_std[:, selected_features])#検証セット
@@ -292,31 +384,29 @@ for e in range(ex_cycle):
     print(f"SVMの実行時間: {svm_time:.4f}秒")
     #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a', encoding='utf-8') as f:
-        f.write(f"Best Solution: {', '.join(map(str, best_solution))}\n")
-        f.write(f"Best Fitness: {str(2 - (1 / best_fitness))}\n")
-        f.write(f"default Fitness: {default_accuracy}\n")
+        f.write(f"Best Solution: {str(best_solution)}\n精度: {str(2 - (1 / best_fitness))}\n")
+        f.write(f"デフォルト精度: {default_accuracy}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
-        f.write(f"SVMの実行時間: {svm_time/3600:.4f}秒\n")
+        f.write(f"SVMの実行時間H: {svm_time/3600:.4f}時間\n")
        # すべての個体の出力
     for i in range(COLONY_SIZE):
         print(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}")
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
-    plt.ylim(0.995, 1)
+    plt.ylim(0.996, 1)
     plt.plot(range(1, CYCLES + 1), fitness_history, )
-    plt.title('Best Accuracy over Generations')
+    plt.title('Best Fitness over Generations')
     plt.xlabel('Generation')
     plt.ylabel('Best Accuracy')
     plt.grid(True)
-    #plt.show()
     plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
     f.write(f"default Fitness: {default_accuracy}\n")
     f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
-    f.write(f"平均実行時間: {(sum(All_time)/len(All_time))/3600:.4f}秒\n")    
+    f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n")    
 print(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
 print(f"default Fitness: {default_accuracy}\n")
 print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")
