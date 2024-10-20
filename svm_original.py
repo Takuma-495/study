@@ -34,10 +34,10 @@ DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 5#サイクル数
+CYCLES = 500#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 1
+ex_cycle = 5
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -142,9 +142,9 @@ def load_kdd99():
         }
     # ラベルをマッピング
     data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.01, random_state=42)
-    df_check = data_frame.sample(frac=0.01, random_state=41)
-    df_test = data_frame.sample(frac=0.01, random_state=39)
+    df_train = data_frame.sample(frac=0.1, random_state=42)
+    df_check = data_frame.sample(frac=0.1, random_state=41)
+    df_test = data_frame.sample(frac=0.1, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
@@ -359,9 +359,8 @@ for e in range(ex_cycle):
                 fitness[i] = evaluate_function(solutions[i],0)      
                 trials[i] = 0
                 if fitness[i] > best_fitness:
-                    best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+                    best_fitness = fitness[i]  
                     best_solution = solutions[i]
-        #best_fitness = np.max(fitness)  # ここは2つの変数を一つにまとめたほうが良いかも
         fitness_history.append(2 - (1 / best_fitness))  # 結果表示用配列
         print("Generation:", _ + 1, "Best Fitness:", 2 - (1 / best_fitness))
         print(best_solution)
@@ -385,6 +384,8 @@ for e in range(ex_cycle):
     #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write(f"Best Solution: {str(best_solution)}\n精度: {str(2 - (1 / best_fitness))}\n")
+        f.write(f"C = {best_solution[0]*(C_range[1]- C_range[0]) + C_range[0]}\n")
+        f.write(f"gamma = {best_solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0]}\n")
         f.write(f"デフォルト精度: {default_accuracy}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
@@ -403,10 +404,10 @@ for e in range(ex_cycle):
     plt.grid(True)
     plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
-    f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
-    f.write(f"default Fitness: {default_accuracy}\n")
+    f.write(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
+    f.write(f"デフォルト精度: {default_accuracy}\n")
     f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
     f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n")    
-print(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
-print(f"default Fitness: {default_accuracy}\n")
+print(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
+print(f"デフォルト精度: {default_accuracy}\n")
 print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")

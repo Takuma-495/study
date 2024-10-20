@@ -35,7 +35,7 @@ DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 5#サイクル数
+CYCLES = 50#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
 EX_CYCLE = 1
@@ -293,7 +293,18 @@ def bee(func_i, solutions, fitness, trials):
             best_solution = solutions[i]
     else:
         trials[func_i] += 1
-# ルーレット選択用関数(作るかも)
+#ルーレット選択
+def roulette_wheel_selection(fitness):
+    total_fitness = np.sum(fitness)
+    if total_fitness == 0:
+        # フィットネスが全て0の場合、ランダムに選択
+        return np.random.randint(len(fitness))
+    probabilities = fitness / total_fitness
+    cumulative_probabilities = np.cumsum(probabilities)
+    r = np.random.rand()
+    # np.searchsorted を使って高速にインデックスを取得
+    selected_index = np.searchsorted(cumulative_probabilities, r)
+    return selected_index
 #ABCアルゴリズム
 best_box = []#各試行の最良値
 All_time = []
@@ -343,7 +354,9 @@ for e in range(EX_CYCLE):
         for i in range(COLONY_SIZE):
             if np.random.rand() < fitness[i] / sum_fitness:
                 bee(i, solutions, fitness, trials)
-
+          #ルーレット選択
+             #selected = roulette_wheel_selection(fitness)
+             #bee(selected, solutions, fitness, trials)
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
