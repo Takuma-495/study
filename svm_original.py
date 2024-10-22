@@ -144,9 +144,9 @@ def load_kdd99():
         }
     # ラベルをマッピング
     data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.01, random_state=42)
-    df_check = data_frame.sample(frac=0.01, random_state=41)
-    df_test = data_frame.sample(frac=0.01, random_state=39)
+    df_train = data_frame.sample(frac=0.1, random_state=42)
+    df_check = data_frame.sample(frac=0.1, random_state=41)
+    df_test = data_frame.sample(frac=0.1, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
@@ -236,7 +236,7 @@ std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-default_accuracy = 0.9978543378810575
+DEFAULT_ACCURACY = 0.9978543378810575
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
@@ -396,7 +396,7 @@ for e in range(ex_cycle):
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
-    print("default_Fitness:", default_accuracy)
+    print("default_Fitness:", DEFAULT_ACCURACY)
     # 実行時間の出力
     print(f"実行時間: {execution_time:.4f}秒")
     print(f"SVMの実行時間: {svm_time:.4f}秒")
@@ -405,7 +405,7 @@ for e in range(ex_cycle):
         f.write(f"Best Solution: {str(best_solution)}\n精度: {str(2 - (1 / best_fitness))}\n")
         f.write(f"C = {best_solution[0]*(C_range[1]- C_range[0]) + C_range[0]}\n")
         f.write(f"gamma = {best_solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0]}\n")
-        f.write(f"デフォルト精度: {default_accuracy}\n")
+        f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
         f.write(f"SVMの実行時間H: {svm_time/3600:.4f}時間\n")
@@ -425,7 +425,7 @@ for e in range(ex_cycle):
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write("\n--- 最終結果（平均値）---\n")
     f.write(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
-    f.write(f"デフォルト精度: {default_accuracy}\n")
+    f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
     f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
     f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n") 
     f.write(f"平均TP: {np.mean(TP_list):.2f}\n")
@@ -440,7 +440,7 @@ with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"平均検証セット分類精度: {np.mean(test_list):.4f}\n")
 print("\n--- 最終結果（平均値）---")
 print(f"平均分類精度: {sum(best_box)/len(best_box)}")
-print(f"デフォルト精度: {default_accuracy}")
+print(f"デフォルト精度: {DEFAULT_ACCURACY}")
 print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒")
 print(f"平均TP: {np.mean(TP_list):.2f}")
 print(f"平均TN: {np.mean(TN_list):.2f}")

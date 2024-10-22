@@ -97,20 +97,20 @@ std_scaler = StandardScaler()
 # データセットのロード
 if dataset_name == 'iris':
     dataset = load_iris()
-    default_accuracy = 0.9777777777777777
+    DEFAULT_ACCURACY = 0.9777777777777777
 elif dataset_name == 'wine':
     dataset = load_wine()
-    default_accuracy = 1.0
+    DEFAULT_ACCURACY = 1.0
 elif dataset_name == 'digits':
     dataset = load_digits()
-    default_accuracy = 0.9851851851851852#標準化あり
-  #  default_accuracy = 0.9907407407407407#標準化なし
+    DEFAULT_ACCURACY = 0.9851851851851852#標準化あり
+  #  DEFAULT_ACCURACY = 0.9907407407407407#標準化なし
 elif dataset_name == 'cancer':
     dataset = load_breast_cancer()
-    default_accuracy = 0.9766081871345029
+    DEFAULT_ACCURACY = 0.9766081871345029
 elif dataset_name == 'kdd99':
     x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-    default_accuracy = 0.9978543378810575
+    DEFAULT_ACCURACY = 0.9978543378810575
 else:
     raise ValueError("Invalid dataset name. Choose from 'iris', 'wine', 'digits', 'cancer'.")
 
@@ -308,14 +308,14 @@ for e in range(ex_cycle):
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
-    print("default_Fitness:", default_accuracy)
+    print("default_Fitness:", DEFAULT_ACCURACY)
     # 実行時間の出力
     print(f"実行時間: {execution_time:.4f}秒")
     print(f"SVMの実行時間: {svm_time:.4f}秒")
     #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a') as f:
         f.write(f"Best Solution: {str(best_solution)}\nBest Fitness: {str(2 - (1 / best_fitness))}\n")
-        f.write(f"default Fitness: {default_accuracy}\n")
+        f.write(f"default Fitness: {DEFAULT_ACCURACY}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
     # best_fitness の推移をグラフで描画
@@ -334,10 +334,10 @@ for e in range(ex_cycle):
          f.write(f"評価値:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
 with open(output_file, 'a') as f:
     f.write(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
-    f.write(f"default Fitness: {default_accuracy}\n")
+    f.write(f"default Fitness: {DEFAULT_ACCURACY}\n")
     f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")      
 print(f"Best Fitness mean: {sum(best_box)/len(best_box)}\n")
-print(f"default Fitness: {default_accuracy}\n")
+print(f"default Fitness: {DEFAULT_ACCURACY}\n")
 print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")
 
 #デフォルトsvm
@@ -350,7 +350,7 @@ if STD == 0:
 else:
     default_svc.fit(x_train, t_train)
     default_predictions = default_svc.predict(x_test)
-default_accuracy = accuracy_score(t_test, default_predictions)
+DEFAULT_ACCURACY = accuracy_score(t_test, default_predictions)
 e = time.perf_counter()
 time = e - s
 """

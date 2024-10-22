@@ -93,7 +93,7 @@ std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-default_accuracy = 0.9983603902676005
+DEFAULT_ACCURACY = 0.9983603902676005
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
 x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化

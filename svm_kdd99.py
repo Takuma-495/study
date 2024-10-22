@@ -35,13 +35,14 @@ DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 50#サイクル数
+CYCLES = 5#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-EX_CYCLE = 1
+EX_CYCLE = 2
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
+    global TP,TN,FP,FN,detection_rate,false_alarm_rate,precision,f1
     # 再分類されたラベル
     y_test_mapped = map_labels(t_end)
     y_pred_mapped = map_labels(pre)
@@ -115,6 +116,7 @@ def calc_and_write_accuracy(t_data,pre,accuracy,name):
         f.write(true_label_counts.to_string() + "\n")
         f.write("\n誤分類(予測):\n")
         f.write(pred_label_counts.to_string() + "\n")
+    return accuracy
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -209,10 +211,14 @@ def evaluate_function(solution,flag):
         calc_and_write_data(predictions)
         train_predictions = svc.predict(x_train_std)
         train_accuracy = accuracy_score( t_train, train_predictions)
+        ac = calc_and_write_accuracy(t_train,train_predictions,train_accuracy,"学習セット")
+        learn_list.append(ac)
         calc_and_write_accuracy(t_train,train_predictions,train_accuracy,"学習セット")
         test_predictions = svc.predict(x_test_std)
         test_accuracy = accuracy_score(t_test, test_predictions)
         calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
+        ac = calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
+        test_list.append(ac)
     elif STD == 0:
         svc.fit(x_train_std, t_train)#学習セット
         predictions = svc.predict(x_test_std)#検証セット
@@ -308,6 +314,10 @@ def roulette_wheel_selection(fitness):
 #ABCアルゴリズム
 best_box = []#各試行の最良値
 All_time = []
+TP_list, TN_list, FP_list, FN_list = [], [], [], []
+detection_rate_list, false_alarm_rate_list = [], []
+precision_list, f1_list = [], []
+learn_list,test_list =[],[]
 fig, ax = plt.subplots()
 #ax.set_title('Best Fitness over Generations')
 #ax.set_xlabel('Generation')
@@ -322,7 +332,9 @@ for e in range(EX_CYCLE):
     best_solution = 0
     best_fitness = 0
     fitness_history = []
-
+     # 各変数を個別に初期化
+    TP, TN, FP, FN = 0, 0, 0, 0
+    detection_rate, false_alarm_rate, precision, f1 = 0, 0, 0, 0
     solutions = np.zeros((COLONY_SIZE, DIM))
     fitness = np.zeros(COLONY_SIZE)
     trials = np.zeros(COLONY_SIZE)
@@ -386,7 +398,14 @@ for e in range(EX_CYCLE):
     execution_time = e_all_time - s_all_time
     best_box.append(2 - (1 / best_fitness))
     All_time.append(execution_time)
-    
+    TP_list.append(TP)
+    TN_list.append(TN)
+    FP_list.append(FP)
+    FN_list.append(FN)
+    detection_rate_list.append(detection_rate)
+    false_alarm_rate_list.append(false_alarm_rate)
+    precision_list.append(precision)
+    f1_list.append(f1)
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
@@ -416,10 +435,32 @@ for e in range(EX_CYCLE):
     plt.grid(True)
     plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
+    f.write("\n--- 最終結果（平均値）---\n")
     f.write(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
     f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
-    f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")
-    f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n")     
-print(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
-print(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
-print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n")
+    f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
+    f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n") 
+    f.write(f"平均TP: {np.mean(TP_list):.2f}\n")
+    f.write(f"平均TN: {np.mean(TN_list):.2f}\n")
+    f.write(f"平均FP: {np.mean(FP_list):.2f}\n")
+    f.write(f"平均FN: {np.mean(FN_list):.2f}\n")
+    f.write(f"平均検知率: {np.mean(detection_rate_list):.4f}\n")
+    f.write(f"平均誤警報率: {np.mean(false_alarm_rate_list):.4f}\n")
+    f.write(f"平均適合率: {np.mean(precision_list):.4f}\n")
+    f.write(f"平均F値: {np.mean(f1_list):.4f}\n")
+    f.write(f"平均学習セット分類精度: {np.mean(learn_list):.4f}\n")
+    f.write(f"平均検証セット分類精度: {np.mean(test_list):.4f}\n")
+print("\n--- 最終結果（平均値）---")
+print(f"平均分類精度: {sum(best_box)/len(best_box)}")
+print(f"デフォルト精度: {DEFAULT_ACCURACY}")
+print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒")
+print(f"平均TP: {np.mean(TP_list):.2f}")
+print(f"平均TN: {np.mean(TN_list):.2f}")
+print(f"平均FP: {np.mean(FP_list):.2f}")
+print(f"平均FN: {np.mean(FN_list):.2f}")
+print(f"平均検知率: {np.mean(detection_rate_list):.4f}")
+print(f"平均誤警報率: {np.mean(false_alarm_rate_list):.4f}")
+print(f"平均適合率: {np.mean(precision_list):.4f}")
+print(f"平均F値: {np.mean(f1_list):.4f}")
+print(f"平均学習セット分類精度: {np.mean(learn_list):.4f}")
+print(f"平均検証セット分類精度: {np.mean(test_list):.4f}")
