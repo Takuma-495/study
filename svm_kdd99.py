@@ -35,7 +35,7 @@ DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
 LIMIT = 100#偵察バチのパラメータ
-CYCLES = 5#サイクル数
+CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
 EX_CYCLE = 2
@@ -145,9 +145,9 @@ def load_kdd99():
         }
     # ラベルをマッピング
     data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.01, random_state=42)
-    df_check = data_frame.sample(frac=0.01, random_state=41)
-    df_test = data_frame.sample(frac=0.01, random_state=39)
+    df_train = data_frame.sample(frac=0.1, random_state=42)
+    df_check = data_frame.sample(frac=0.1, random_state=41)
+    df_test = data_frame.sample(frac=0.1, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
