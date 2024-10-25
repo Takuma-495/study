@@ -27,10 +27,9 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-r_range = (-10, 10)#(-10, 10)
+r_range = (1.0e-6, 10)#(-10, 10)
 degree_range = (1, 3) #ここが４，５だと処理終わらなくなる #(1, 3)
-svm_time = 0 #時間測定用
-svm_iter = int(1.0e9)#制限なし　＝　−１
+svm_iter = int(1.0e5)#10万#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
@@ -38,7 +37,7 @@ LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-EX_CYCLE = 2
+EX_CYCLE = 5
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -189,19 +188,23 @@ def evaluate_function(solution,flag):
     global svm_time
     global STD
     s_svm_time = time.perf_counter() 
-    #print(f"評価中",solution) #デバッグ用
+    print(f"評価中",solution) #デバッグ用
     if solution[0] == 1:
-        svc = svm.SVC(kernel='linear', C = solution[1],verbose=DEBAG,max_iter= svm_iter)
+        svc = svm.SVC(kernel='linear',C=solution[1]*(C_range[1]- C_range[0]) + C_range[0],
+                      verbose=DEBAG,max_iter= svm_iter)
     elif solution[0] == 2:
-        svc = svm.SVC(kernel='rbf',  C = solution[1],
-                      gamma = solution[2],verbose=DEBAG,max_iter= svm_iter)
+        svc = svm.SVC(kernel='rbf',  C=solution[1]*(C_range[1]- C_range[0]) + C_range[0],
+                      gamma = solution[2]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],verbose=DEBAG,max_iter= svm_iter)
     elif solution[0] == 3:
-        svc = svm.SVC(kernel='sigmoid',C = solution[1],
-                      gamma = solution[2], coef0 = solution[3],verbose=DEBAG,max_iter= svm_iter)
+        svc = svm.SVC(kernel='sigmoid',C = solution[1]*(C_range[1]- C_range[0]) + C_range[0],
+                      gamma = solution[2]*(gamma_range[1]- gamma_range[0]) + gamma_range[0], 
+                      coef0 = solution[3]*(r_range[1]- r_range[0]) + r_range[0],verbose=DEBAG,max_iter= svm_iter)
     elif solution[0] == 4:
-        svc = svm.SVC(kernel='poly',C = solution[1],
-                      gamma = solution[2], coef0 = solution[3],
-                      degree = round(solution[4]),verbose=DEBAG,max_iter= svm_iter)
+        svc = svm.SVC(kernel='poly',C =  solution[1]*(C_range[1]- C_range[0]) + C_range[0],
+                      gamma = solution[2]*(gamma_range[1]- gamma_range[0]) + gamma_range[0], 
+                      coef0 = solution[3]*(r_range[1]- r_range[0]) + r_range[0],
+                      degree = round(solution[4]*(degree_range[1]- degree_range[0]) + degree_range[0])
+                      ,verbose=DEBAG,max_iter= svm_iter)
     else:
         print("カーネル関数エラー")
     if flag == 1:
@@ -249,6 +252,7 @@ def random_kernel(new_solution):
           new_solution[j] =np.random.randint(1,5)\
 """
 #範囲制限関数
+"""
 def clip(index,solution):
     if   index == 1:
         return np.clip(solution[1], *C_range)
@@ -259,15 +263,11 @@ def clip(index,solution):
     if index == 4:
         return np.clip(solution[4], *degree_range)
     return None
-
+"""
 # 解の初期化
 def initialize_solution():
-    C = np.random.uniform(*C_range)
     kernel = np.random.choice(kernels)
-    gamma = np.random.uniform(*gamma_range)
-    r = np.random.uniform(*r_range)
-    degree = np.random.uniform(*degree_range)
-    return [kernel, C, gamma, r, degree]
+    return [kernel, np.random.rand(), np.random.rand(), np.random.rand(), np.random.rand()]
 
 def bee(func_i, solutions, fitness, trials):
     """解の更新
@@ -282,9 +282,9 @@ def bee(func_i, solutions, fitness, trials):
         while k == func_i:
             k = np.random.randint(0, COLONY_SIZE)
         new_solution[j] = solutions[func_i][j] + np.random.uniform(-1, 1) * (solutions[func_i][j] - solutions[k][j])
-        new_solution[j] = clip(j, new_solution)
+        new_solution[j] = np.clip(new_solution[j],0,1)
         #degreeを丸めた値が更新後も変わらない場合は評価しない
-        if j == 4 and round(solutions[func_i][j]) == round(new_solution[j]):
+        if j == 4 and round(solutions[func_i][j]*(degree_range[1]- degree_range[0]) + degree_range[0]) ==  round(new_solution[j]*(degree_range[1]- degree_range[0]) + degree_range[0]):
             trials[func_i] += 1
             return
     else:#カーネル関数の更新
@@ -318,6 +318,7 @@ TP_list, TN_list, FP_list, FN_list = [], [], [], []
 detection_rate_list, false_alarm_rate_list = [], []
 precision_list, f1_list = [], []
 learn_list,test_list =[],[]
+timelist =[]
 fig, ax = plt.subplots()
 #ax.set_title('Best Fitness over Generations')
 #ax.set_xlabel('Generation')
@@ -331,6 +332,7 @@ for e in range(EX_CYCLE):
     # 初期化
     best_solution = 0
     best_fitness = 0
+    svm_time = 0 #時間測定用
     fitness_history = []
      # 各変数を個別に初期化
     TP, TN, FP, FN = 0, 0, 0, 0
@@ -372,13 +374,7 @@ for e in range(EX_CYCLE):
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
-                solutions[i] = [
-                    np.random.choice(kernels),
-                    C_range[0] + C_range[1] - solutions[i][1],
-                    gamma_range[0] + gamma_range[1] - solutions[i][2],
-                    r_range[0] + r_range[1] - solutions[i][3],
-                    degree_range[0] + degree_range[1] - solutions[i][4]
-                ]
+                solutions[i] = initialize_solution()
                 fitness[i] = evaluate_function(solutions[i],0)
                 trials[i] = 0
                 if fitness[i] > best_fitness:
@@ -406,6 +402,7 @@ for e in range(EX_CYCLE):
     false_alarm_rate_list.append(false_alarm_rate)
     precision_list.append(precision)
     f1_list.append(f1)
+    timelist.append(svm_time)
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
@@ -416,6 +413,10 @@ for e in range(EX_CYCLE):
     #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write(f"Best Solution: {str(best_solution)}\n精度: {str(2 - (1 / best_fitness))}\n")
+        f.write(f"C = {best_solution[0]*(C_range[1]- C_range[0]) + C_range[0]}\n")
+        f.write(f"gamma = {best_solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0]}\n")
+        f.write(f"coef0 = {best_solution[0]*(r_range[1]- r_range[0]) + r_range[0]}\n")
+        f.write(f"d = {best_solution[1]*(degree_range[1]- degree_range[0]) + degree_range[0]}\n")
         f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
@@ -427,7 +428,7 @@ for e in range(EX_CYCLE):
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}\n")
     plt.figure()
-    plt.ylim(0.996, 1)
+    plt.ylim(0.998, 1)
     plt.plot(range(1, CYCLES + 1), fitness_history, )
     plt.title('Best Fitness over Generations')
     plt.xlabel('Generation')
@@ -438,8 +439,8 @@ with open(output_file, 'a', encoding='utf-8') as f:
     f.write("\n--- 最終結果（平均値）---\n")
     f.write(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
     f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
-    f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
-    f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n") 
+    f.write(f"平均svm実行時間: {sum(timelist)/len(timelist):.4f}秒\n") 
+    f.write(f"平均svm実行時間H: {(sum(timelist)/len(timelist))/3600:.4f}時間\n") 
     f.write(f"平均TP: {np.mean(TP_list):.2f}\n")
     f.write(f"平均TN: {np.mean(TN_list):.2f}\n")
     f.write(f"平均FP: {np.mean(FP_list):.2f}\n")
@@ -453,7 +454,7 @@ with open(output_file, 'a', encoding='utf-8') as f:
 print("\n--- 最終結果（平均値）---")
 print(f"平均分類精度: {sum(best_box)/len(best_box)}")
 print(f"デフォルト精度: {DEFAULT_ACCURACY}")
-print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒")
+print(f"平均実行時間: {sum(timelist)/len(timelist):.4f}秒")
 print(f"平均TP: {np.mean(TP_list):.2f}")
 print(f"平均TN: {np.mean(TN_list):.2f}")
 print(f"平均FP: {np.mean(FP_list):.2f}")

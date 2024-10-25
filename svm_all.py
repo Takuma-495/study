@@ -31,10 +31,10 @@ kdd99はしたほうが良かった
 パラメータの範囲（実験して良さそうな値出す)
 """
 # SVMのパラメータ範囲を設定
-kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
+kernels = [3, 4]#[1, 2, 3, 4]
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-r_range = (-10, 10)#(-10, 10)
+r_range = (1.0e-6, 1)#(-10, 10)
 degree_range = (1, 3) #ここが４，５だと処理終わらなくなる #(1, 3)
 svm_time = 0 #時間測定用
 svm_iter = int(1.0e7)#制限なし　＝　−１
@@ -45,7 +45,7 @@ LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 10
+ex_cycle = 2
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",

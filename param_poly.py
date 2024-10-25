@@ -104,26 +104,23 @@ x_end_std = std_scaler.transform(x_end)
 def evaluate_function(solution,flag):
     global STD
     #print(f"評価中",solution) #デバッグ用    
-    svc = svm.SVC(kernel='rbf',  C = solution[0]*(C_range[1]- C_range[0]) + C_range[0],
-                  gamma = solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
-                  max_iter= -1)
-    selected_features = solution[2:] >= 0.5
-    if np.sum(selected_features) == 0:
-        return 0 
+    svc = svm.SVC(kernel='poly',  
+                  gamma = solution[0]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
+                  max_iter=int(1.0e5))
     if flag == 1:
-        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
-        predictions = svc.predict(x_end_std[:, selected_features])
+        svc.fit(x_train_std, t_train)#学習セット
+        predictions = svc.predict(x_end_std)
         Miss = 1 - accuracy_score(t_end, predictions)
     elif STD == 0:
-        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
-        predictions = svc.predict(x_test_std[:, selected_features])#検証セット
+        svc.fit(x_train_std, t_train)#学習セット
+        predictions = svc.predict(x_test_std)#検証セット
         Miss = 1 - accuracy_score(t_test, predictions)
     else: print("標準化をしてください\n")
 
     return  1/(1+Miss)#ただの評価値
 #ABCアルゴリズム
   # 初期化
-solution = np.array([0.92818, 0, 0.82410, 0.09607, 0.89313, 0.40156, 0.88714, 0.44627, 0.89007, 0.12300, 0.91560, 0.62145, 0.08931, 0.21920, 0.54027, 0.76712, 0.46283, 0.30774, 0.49329, 0.09119, 0.89088, 0.85179, 0.81813, 0.77971, 0.15209, 0.66523, 0.15144, 0.94665, 0.36397, 0.92031, 0.57207, 0.05173, 0.62607, 0.97314, 0.02873, 0.32291, 0.29008, 0.61521, 0.21289, 0.12474])
+solution = np.array([0])
 fitness = 0
 evaluate_function(solution,0)
 # 解の初期化

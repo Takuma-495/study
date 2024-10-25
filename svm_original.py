@@ -28,7 +28,6 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 # SVMのパラメータ範囲を設定
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-svm_time = 0 #時間測定用
 svm_iter = -1#int(1.0e9)#制限なし　＝　−１
 DEBUG = False #True or False
 #ABCのハイパーパラメータ
@@ -316,6 +315,7 @@ TP_list, TN_list, FP_list, FN_list = [], [], [], []
 detection_rate_list, false_alarm_rate_list = [], []
 precision_list, f1_list = [], []
 learn_list,test_list =[],[]
+timelist =[]
 #fig, ax = plt.subplots()
 #ax.set_title('Best Fitness over Generations')
 #ax.set_xlabel('Generation')
@@ -330,6 +330,7 @@ for e in range(ex_cycle):
     best_solution = 0
     best_fitness = 0
     fitness_history = []
+    svm_time = 0 #時間測定用
    # 各変数を個別に初期化
     TP, TN, FP, FN = 0, 0, 0, 0
     detection_rate, false_alarm_rate, precision, f1 = 0, 0, 0, 0
@@ -343,7 +344,6 @@ for e in range(ex_cycle):
     for i in range(COLONY_SIZE):
         solutions[i] = np.random.rand(DIM)
         fitness[i] = evaluate_function(solutions[i],0)
-       
         if fitness[i] > best_fitness:
             best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
             best_solution = solutions[i]
@@ -393,6 +393,7 @@ for e in range(ex_cycle):
     false_alarm_rate_list.append(false_alarm_rate)
     precision_list.append(precision)
     f1_list.append(f1)
+    timelist.append(svm_time)
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
@@ -426,8 +427,8 @@ with open(output_file, 'a', encoding='utf-8') as f:
     f.write("\n--- 最終結果（平均値）---\n")
     f.write(f"平均分類精度: {sum(best_box)/len(best_box)}\n")
     f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
-    f.write(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒\n") 
-    f.write(f"平均実行時間H: {(sum(All_time)/len(All_time))/3600:.4f}時間\n") 
+    f.write(f"平均実行時間: {sum(timelist)/len(timelist):.4f}秒\n") 
+    f.write(f"平均実行時間H: {(sum(timelist)/len(timelist))/3600:.4f}時間\n") 
     f.write(f"平均TP: {np.mean(TP_list):.2f}\n")
     f.write(f"平均TN: {np.mean(TN_list):.2f}\n")
     f.write(f"平均FP: {np.mean(FP_list):.2f}\n")
@@ -441,7 +442,7 @@ with open(output_file, 'a', encoding='utf-8') as f:
 print("\n--- 最終結果（平均値）---")
 print(f"平均分類精度: {sum(best_box)/len(best_box)}")
 print(f"デフォルト精度: {DEFAULT_ACCURACY}")
-print(f"平均実行時間: {sum(All_time)/len(All_time):.4f}秒")
+print(f"平均実行時間: {sum(timelist)/len(timelist):.4f}秒")
 print(f"平均TP: {np.mean(TP_list):.2f}")
 print(f"平均TN: {np.mean(TN_list):.2f}")
 print(f"平均FP: {np.mean(FP_list):.2f}")
