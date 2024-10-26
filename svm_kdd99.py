@@ -27,9 +27,9 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-r_range = (1.0e-6, 10)#(-10, 10)
+r_range = (0, 10)#(-10, 10)
 degree_range = (1, 3) #ここが４，５だと処理終わらなくなる #(1, 3)
-svm_iter = int(1.0e5)#10万#制限なし　＝　−１
+svm_iter = int(1.0e7)#100万#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ/2(偶数整数)
