@@ -258,6 +258,7 @@ def roulette_wheel_selection(fitness):
 def evaluate_function(solution,flag):
     global svm_time
     global STD
+    global eva_count
     s_svm_time = time.perf_counter() 
     #print(f"評価中",solution) #デバッグ用    
     svc = svm.SVC(kernel='rbf',  C = solution[0]*(C_range[1]- C_range[0]) + C_range[0],
@@ -286,7 +287,7 @@ def evaluate_function(solution,flag):
     else: print("標準化をしてください\n")
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
-
+    eva_count = eva_count + 1
     return  1/(1+Miss)#ただの評価値
 def bee(i, solutions, fitness, trials):
     global best_fitness
@@ -331,6 +332,7 @@ for e in range(ex_cycle):
     best_fitness = 0
     fitness_history = []
     svm_time = 0 #時間測定用
+    eva_count =0
    # 各変数を個別に初期化
     TP, TN, FP, FN = 0, 0, 0, 0
     detection_rate, false_alarm_rate, precision, f1 = 0, 0, 0, 0
@@ -410,6 +412,7 @@ for e in range(ex_cycle):
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
         f.write(f"SVMの実行時間H: {svm_time/3600:.4f}時間\n")
+         f.write(f"評価回数: {eva_count}回\n")
        # すべての個体の出力
     for i in range(COLONY_SIZE):
         print(f"精度:{2-(1/fitness[i]):.4f}  {solutions[i]}")

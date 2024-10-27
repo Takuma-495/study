@@ -187,6 +187,7 @@ x_end_std = std_scaler.transform(x_end)
 def evaluate_function(solution,flag):
     global svm_time
     global STD
+    global eva_count
     s_svm_time = time.perf_counter() 
     print(f"評価中",solution) #デバッグ用
     if solution[0] == 1:
@@ -233,7 +234,7 @@ def evaluate_function(solution,flag):
 
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
-
+    eva_count = eva_count + 1
     return  1/(2-accuracy) 
 
 def roulette_kernel(new_solution,solutions):
@@ -333,6 +334,7 @@ for e in range(EX_CYCLE):
     best_solution = 0
     best_fitness = 0
     svm_time = 0 #時間測定用
+    eva_count =0
     fitness_history = []
      # 各変数を個別に初期化
     TP, TN, FP, FN = 0, 0, 0, 0
@@ -421,6 +423,7 @@ for e in range(EX_CYCLE):
         f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
         f.write(f"SVMの実行時間H: {svm_time/3600:.4f}時間\n")
+        f.write(f"評価回数: {eva_count}回\n")
     # best_fitness の推移をグラフで描画
     # すべての個体の出力
     for i in range(COLONY_SIZE):
