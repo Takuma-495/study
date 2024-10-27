@@ -104,7 +104,7 @@ x_end_std = std_scaler.transform(x_end)
 def evaluate_function(solution,flag):
     global STD
     #print(f"評価中",solution) #デバッグ用    
-    svc = svm.SVC(kernel='poly',  
+    svc = svm.SVC(kernel='rbf', C = 
                   gamma = solution[0]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
                   max_iter=int(1.0e5))
     if flag == 1:

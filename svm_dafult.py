@@ -150,7 +150,7 @@ if dataset_name == 'kdd99':
 STD = 0#0で標準化有
 svm_time = 0
 s_svm_time = time.perf_counter()
-svc = svm.SVC()
+svc = svm.SVC(C=0.01037*(3.5e4-1.0e-6)+1.0e-6,gamma =0.01690*(32-1.0e-6)+1.0e-6)
 if STD == 0:
     svc.fit(x_train_std, t_train)
     predictions = svc.predict(x_test_std)
