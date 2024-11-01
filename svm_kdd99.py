@@ -24,7 +24,7 @@ degreeの値が変わらなかったらもう一度個体生成(済)
 初期化の工夫
 """
 # SVMのパラメータ範囲を設定
-kernels = [1, 2, 3, 4]#[1, 2, 3, 4]
+kernels = [1,2,3,4]#[1, 2, 3, 4]
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
 r_range = (0, 10)#(-10, 10)
@@ -37,7 +37,7 @@ LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-EX_CYCLE = 1
+EX_CYCLE = 4
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -144,9 +144,9 @@ def load_kdd99():
         }
     # ラベルをマッピング
     data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.01, random_state=42)
-    df_check = data_frame.sample(frac=0.01, random_state=41)
-    df_test = data_frame.sample(frac=0.01, random_state=39)
+    df_train = data_frame.sample(frac=0.1, random_state=42)
+    df_check = data_frame.sample(frac=0.1, random_state=41)
+    df_test = data_frame.sample(frac=0.1, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
