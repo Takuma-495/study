@@ -37,7 +37,7 @@ LIMIT = 100#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 5# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-EX_CYCLE = 4
+EX_CYCLE = 5
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -368,11 +368,11 @@ for e in range(EX_CYCLE):
         # 追従バチ
         sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
-           # if np.random.rand() < fitness[i] / sum_fitness:
-             #   bee(i, solutions, fitness, trials)
+            if np.random.rand() < fitness[i] / sum_fitness:
+                bee(i, solutions, fitness, trials)
           #ルーレット選択
-             selected = roulette_wheel_selection(fitness)
-             bee(selected, solutions, fitness, trials)
+            # selected = roulette_wheel_selection(fitness)
+            # bee(selected, solutions, fitness, trials)
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
