@@ -316,7 +316,7 @@ TP_list, TN_list, FP_list, FN_list = [], [], [], []
 detection_rate_list, false_alarm_rate_list = [], []
 precision_list, f1_list = [], []
 learn_list,test_list =[],[]
-timelist =[]
+timelist,evalist =[],[]
 #fig, ax = plt.subplots()
 #ax.set_title('Best Fitness over Generations')
 #ax.set_xlabel('Generation')
@@ -396,6 +396,7 @@ for e in range(ex_cycle):
     precision_list.append(precision)
     f1_list.append(f1)
     timelist.append(svm_time)
+    evalist.append(eva_count)
     # 結果の出力
     print("Best Solution:", best_solution)
     print("Best Fitness:", 2 - (1/best_fitness))
@@ -440,6 +441,7 @@ with open(output_file, 'a', encoding='utf-8') as f:
     f.write(f"平均誤警報率: {np.mean(false_alarm_rate_list):.4f}\n")
     f.write(f"平均適合率: {np.mean(precision_list):.4f}\n")
     f.write(f"平均F値: {np.mean(f1_list):.4f}\n")
+    f.write(f"平均評価回数: {np.mean(evalist):.4f}\n")
     f.write(f"平均学習セット分類精度: {np.mean(learn_list):.4f}\n")
     f.write(f"平均検証セット分類精度: {np.mean(test_list):.4f}\n")
 print("\n--- 最終結果（平均値）---")
