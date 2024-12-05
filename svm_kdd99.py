@@ -368,11 +368,11 @@ for e in range(EX_CYCLE):
         # 追従バチ
         sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
-            if np.random.rand() > fitness[i] / sum_fitness:
-                bee(i, solutions, fitness, trials)
+            #if np.random.rand() > fitness[i] / sum_fitness:
+             #   bee(i, solutions, fitness, trials)
           #ルーレット選択
-            # selected = roulette_wheel_selection(fitness)
-            # bee(selected, solutions, fitness, trials)
+             selected = roulette_wheel_selection(fitness)
+             bee(selected, solutions, fitness, trials)
         # 偵察バチ
         for i in range(COLONY_SIZE):
             if trials[i] > LIMIT:
