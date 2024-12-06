@@ -1,0 +1,130 @@
+True Positives (TP): 39594
+True Negatives (TN): 9735
+False Positives (FP): 31
+False Negatives (FN): 42
+検知率: 0.9989
+誤警報率: 0.0032
+適合率: 0.9992
+F値: 0.9991
+誤分類したデータ (正解ラベルでソート):
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: normal, Predicted: Probe
+True: normal, Predicted: Probe
+True: normal, Predicted: DoS
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: DoS
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: DoS
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: DoS
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: DoS
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+
+誤分類(正解):
+normal    31
+R2L       14
+Probe     12
+DoS       12
+U2R        4
+
+誤分類(予測):
+normal    42
+R2L       14
+Probe     10
+DoS        7
+
+------学習セット-----
+精度: 0.9998583053317679
+誤分類(正解):
+normal    5
+R2L       1
+DoS       1
+
+誤分類(予測):
+DoS       3
+R2L       2
+normal    2
+
+------検証セット-----
+精度: 0.9990081373223756
+誤分類(正解):
+normal    18
+R2L       13
+Probe      8
+DoS        7
+U2R        3
+
+誤分類(予測):
+normal    30
+R2L        8
+Probe      6
+DoS        5
+Best Solution: [0.64021 0.14960 0.27057 0.60859 0.58647 0.32165 0.81344 0.52397 0.99519
+ 0.59998 0.57494 0.27083 0.58342 0.55196 0.40285 0.65500 0.59951 0.60382
+ 0.36602 0.89817 0.95800 0.57073 0.77075 0.31445 0.60938 0.03670 0.35597
+ 0.45379 0.48201 0.12118 0.45187 0.53094 0.58111 0.85046 0.58113 0.86400
+ 0.40766 0.81866 0.17968 0.65160]
+精度: 0.9985223270312944
+C = 22407.350000359787
+gamma = 4.7872008504000005

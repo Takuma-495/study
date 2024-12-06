@@ -32,11 +32,11 @@ svm_iter = -1#int(1.0e9)#制限なし　＝　−１
 DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
-LIMIT = 100#偵察バチのパラメータ
-CYCLES = 500#サイクル数
+LIMIT = 10#偵察バチのパラメータ
+CYCLES = 50#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 10
+ex_cycle = 1
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -143,9 +143,9 @@ def load_kdd99():
         }
     # ラベルをマッピング
     data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.1, random_state=42)
-    df_check = data_frame.sample(frac=0.1, random_state=41)
-    df_test = data_frame.sample(frac=0.1, random_state=39)
+    df_train = data_frame.sample(frac=0.01, random_state=42)
+    df_check = data_frame.sample(frac=0.01, random_state=41)
+    df_test = data_frame.sample(frac=0.01, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
@@ -351,10 +351,7 @@ for e in range(ex_cycle):
             best_solution = solutions[i]
         with open(output_file, 'a', encoding='utf-8') as f:
             f.write(f"初期化{i+1} , Fitness:{fitness[i]}\n")
-            f.write(f"{solutions[i]}\n")
-        print(f"初期化{i} ", "Fitness:", fitness[i])
-        print(solutions[i])
-   
+            f.write(f"{solutions[i]}\n")  
     # ABC   
     for _ in range(CYCLES):
         # 働きバチ
