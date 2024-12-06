@@ -1,0 +1,99 @@
+True Positives (TP): 39612
+True Negatives (TN): 9750
+False Positives (FP): 16
+False Negatives (FN): 24
+検知率: 0.9994
+誤警報率: 0.0016
+適合率: 0.9996
+F値: 0.9995
+誤分類したデータ (正解ラベルでソート):
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: R2L
+True: DoS, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: DoS
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: DoS
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: DoS
+True: normal, Predicted: Probe
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+
+誤分類(正解):
+normal    16
+R2L       12
+Probe      7
+DoS        6
+U2R        2
+
+誤分類(予測):
+normal    24
+R2L        8
+DoS        7
+Probe      4
+
+------学習セット-----
+精度: 0.9997773369499211
+誤分類(正解):
+normal    5
+R2L       4
+DoS       1
+Probe     1
+
+誤分類(予測):
+normal    6
+DoS       3
+R2L       2
+
+------検証セット-----
+精度: 0.9993320108497632
+誤分類(正解):
+R2L       11
+normal    10
+Probe      5
+DoS        4
+U2R        3
+
+誤分類(予測):
+normal    21
+R2L        6
+DoS        4
+Probe      2
+Best Solution: [2.00000 0.01244 0.01542 0.59134 0.99643]
+精度: 0.999129589895146
+C = 435.40000098755996
+gamma = 0.49344098457999996
+coef0 = 5.913399999999999
+d = 2.9928600000000003

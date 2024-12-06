@@ -1,0 +1,112 @@
+True Positives (TP): 39600
+True Negatives (TN): 9750
+False Positives (FP): 16
+False Negatives (FN): 36
+検知率: 0.9991
+誤警報率: 0.0016
+適合率: 0.9996
+F値: 0.9993
+誤分類したデータ (正解ラベルでソート):
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: Probe
+True: DoS, Predicted: normal
+True: DoS, Predicted: R2L
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: DoS, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: Probe, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: R2L, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: U2R, Predicted: normal
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: DoS
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: Probe
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+True: normal, Predicted: R2L
+
+誤分類(正解):
+normal    16
+DoS       13
+R2L       12
+Probe      8
+U2R        5
+
+誤分類(予測):
+normal    36
+R2L       12
+Probe      4
+DoS        2
+
+------学習セット-----
+精度: 0.9997570948544593
+誤分類(正解):
+normal    5
+DoS       3
+R2L       3
+Probe     1
+
+誤分類(予測):
+normal    7
+DoS       3
+R2L       2
+
+------検証セット-----
+精度: 0.9990486215132991
+誤分類(正解):
+normal    15
+DoS       12
+R2L        9
+Probe      8
+U2R        3
+
+誤分類(予測):
+normal    30
+Probe      7
+R2L        6
+DoS        4
+Best Solution: [0.04099 0.08670 0.43683 0.03989 0.99606 0.00417 0.50213 0.58340 0.52737
+ 0.39213 0.80736 0.55804 0.98785 0.14392 0.57289 0.56556 0.57193 0.65994
+ 0.13549 0.12731 0.97612 0.51312 0.23484 0.87442 0.59058 0.51488 0.37267
+ 0.41375 0.01572 0.81727 0.03928 0.66025 0.51893 0.70823 0.54636 0.97010
+ 0.59051 0.64292 0.56764 0.34433]
+精度: 0.998906926845067
+C = 1434.65000095901
+gamma = 2.7744009133
