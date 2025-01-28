@@ -243,11 +243,6 @@ detection_rate_list, false_alarm_rate_list = [], []
 precision_list, f1_list = [], []
 learn_list,test_list =[],[]
 timelist,evalist =[],[]
-#fig, ax = plt.subplots()
-#ax.set_title('Best Fitness over Generations')
-#ax.set_xlabel('Generation')
-#ax.set_ylabel('Best Fitness')
-#ax.grid(True)
 for e in range(EX_CYCLE):
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write("###############\n\n")
