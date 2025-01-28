@@ -221,9 +221,9 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"偵察バチのLIMIT: {LIMIT}\n")
     f.write(f"サイクル数: {CYCLES}\n")
     f.write(f"試行回数: {EX_CYCLE}\n")
+
 STD = args.std#0で正規化有
 std_scaler = MinMaxScaler()
-#std_scaler = StandardScaler()
 # データセットのロード
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 DEFAULT_ACCURACY = 0.9978543378810575
@@ -334,7 +334,7 @@ for e in range(EX_CYCLE):
     plt.xlabel('Generation')
     plt.ylabel('Best Accuracy')
     plt.grid(True)
-    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
+    plt.savefig(f"./kdd99_{str(args.output)}-{e}-ori.pdf", bbox_inches="tight")
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write("\n--- 最終結果（平均値）---\n")
     f.write(f"平均分類精度: {sum(best_box)/len(best_box)}\n")

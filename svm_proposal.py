@@ -100,76 +100,6 @@ def calc_and_write_accuracy(t_data,pre,accuracy,name):
         f.write(true_label_counts.to_string() + "\n")
         f.write("\n誤分類(予測):\n")
         f.write(pred_label_counts.to_string() + "\n")
-def load_kdd99():
-    url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
-    col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
-                 "dst_bytes", "land", "wrong_fragment", "urgent",
-                 "hot", "num_failed_logins", "logged_in", "num_compromised",
-                 "root_shell", "su_attempted", "num_root",
-                 "num_file_creations", "num_shells", "num_access_files",
-                 "num_outbound_cmds", "is_host_login",
-                 "is_guest_login", "count", "srv_count", "serror_rate",
-                 "srv_serror_rate", "rerror_rate", "srv_rerror_rate",
-                 "same_srv_rate", "diff_srv_rate", "srv_diff_host_rate",
-                 "dst_host_count", "dst_host_srv_count",
-                 "dst_host_same_srv_rate", "dst_host_diff_srv_rate",
-                 "dst_host_same_src_port_rate", "dst_host_srv_diff_host_rate",
-                 "dst_host_serror_rate", "dst_host_srv_serror_rate",
-                 "dst_host_rerror_rate", "dst_host_srv_rerror_rate", "label"]
-
-    data_frame = pd.read_csv(url, names=col_names)
-    data_frame= data_frame.drop(['protocol_type', 'service', 'flag'], axis=1)
-    label_map = {
-            'normal.': 'normal',
-            'back.': 'DoS', 'land.': 'DoS', 'neptune.': 'DoS', 'pod.': 'DoS', 'smurf.': 'DoS', 'teardrop.': 'DoS',
-            'ipsweep.': 'Probe', 'nmap.': 'Probe', 'portsweep.': 'Probe', 'satan.': 'Probe',
-            'ftp_write.': 'R2L', 'guess_passwd.': 'R2L', 'imap.': 'R2L', 'multihop.': 'R2L', 'phf.': 'R2L', 'spy.': 'R2L', 'warezclient.': 'R2L', 'warezmaster.': 'R2L',
-            'buffer_overflow.': 'U2R', 'loadmodule.': 'U2R', 'perl.': 'U2R', 'rootkit.': 'U2R'
-        }
-    # ラベルをマッピング
-    data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.1, random_state=42)
-    df_check = data_frame.sample(frac=0.1, random_state=41)
-    df_test = data_frame.sample(frac=0.1, random_state=39)
-    x_trai = df_train.drop('label', axis=1)
-    t_trai = df_train['label']
-    x_ch = df_check.drop('label', axis=1)
-    t_ch = df_check['label']
-    x_tes = df_test.drop('label', axis=1)
-    t_tes = df_test['label']
-    return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
-
-parser = argparse.ArgumentParser(description="説明をここに書く")
-parser.add_argument("-s","--std", type=int, default=0, help="0で正規化")
-parser.add_argument("-d","--data", type=str,default="kdd99" , help="データセットネーム")
-parser.add_argument("-o", "--output", default= 0, help="ファイルの枝番とか")
-args = parser.parse_args()
-
-dataset_name = args.data
-output_file = args.data+ "_"+str(args.output)+".txt"
-
-with open(output_file, 'w', encoding='utf-8') as f:
-    f.write(f"正規化(0で有効): {args.std}\n")
-    f.write(f"データセット: {args.data}\n")
-    f.write(f"打ち切り学習回数: {format(svm_iter, '.1e')}\n")
-    f.write(f'r_range = {r_range}\n')
-    f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
-    f.write(f"偵察バチのLIMIT: {LIMIT}\n")
-    f.write(f"サイクル数: {CYCLES}\n")
-    f.write(f"試行回数: {EX_CYCLE}\n")
-    
-STD = args.std#0で正規化有
-std_scaler = MinMaxScaler()
-
-# データセットのロード
-x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
-DEFAULT_ACCURACY =   0.9978543378810575
-# データをトレーニングセットとテストセットに分割する
-std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
-x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
-x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
-x_end_std = std_scaler.transform(x_end)
-
 # 評価関数
 def evaluate_function(solution,flag):
     global svm_time
@@ -281,6 +211,74 @@ def roulette_wheel_selection(fitness):
     # np.searchsorted を使って高速にインデックスを取得
     selected_index = np.searchsorted(cumulative_probabilities, r)
     return selected_index
+
+def load_kdd99():
+    url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
+    col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
+                 "dst_bytes", "land", "wrong_fragment", "urgent",
+                 "hot", "num_failed_logins", "logged_in", "num_compromised",
+                 "root_shell", "su_attempted", "num_root",
+                 "num_file_creations", "num_shells", "num_access_files",
+                 "num_outbound_cmds", "is_host_login",
+                 "is_guest_login", "count", "srv_count", "serror_rate",
+                 "srv_serror_rate", "rerror_rate", "srv_rerror_rate",
+                 "same_srv_rate", "diff_srv_rate", "srv_diff_host_rate",
+                 "dst_host_count", "dst_host_srv_count",
+                 "dst_host_same_srv_rate", "dst_host_diff_srv_rate",
+                 "dst_host_same_src_port_rate", "dst_host_srv_diff_host_rate",
+                 "dst_host_serror_rate", "dst_host_srv_serror_rate",
+                 "dst_host_rerror_rate", "dst_host_srv_rerror_rate", "label"]
+
+    data_frame = pd.read_csv(url, names=col_names)
+    data_frame= data_frame.drop(['protocol_type', 'service', 'flag'], axis=1)
+    label_map = {
+            'normal.': 'normal',
+            'back.': 'DoS', 'land.': 'DoS', 'neptune.': 'DoS', 'pod.': 'DoS', 'smurf.': 'DoS', 'teardrop.': 'DoS',
+            'ipsweep.': 'Probe', 'nmap.': 'Probe', 'portsweep.': 'Probe', 'satan.': 'Probe',
+            'ftp_write.': 'R2L', 'guess_passwd.': 'R2L', 'imap.': 'R2L', 'multihop.': 'R2L', 'phf.': 'R2L', 'spy.': 'R2L', 'warezclient.': 'R2L', 'warezmaster.': 'R2L',
+            'buffer_overflow.': 'U2R', 'loadmodule.': 'U2R', 'perl.': 'U2R', 'rootkit.': 'U2R'
+        }
+    # ラベルをマッピング
+    data_frame['label'] = data_frame['label'].map(label_map)
+    df_train = data_frame.sample(frac=0.1, random_state=42)
+    df_check = data_frame.sample(frac=0.1, random_state=41)
+    df_test = data_frame.sample(frac=0.1, random_state=39)
+    x_trai = df_train.drop('label', axis=1)
+    t_trai = df_train['label']
+    x_ch = df_check.drop('label', axis=1)
+    t_ch = df_check['label']
+    x_tes = df_test.drop('label', axis=1)
+    t_tes = df_test['label']
+    return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
+
+parser = argparse.ArgumentParser(description="説明をここに書く")
+parser.add_argument("-s","--std", type=int, default=0, help="0で正規化")
+parser.add_argument("-o", "--output", default= 0, help="ファイルの枝番とか")
+args = parser.parse_args()
+output_file ="kdd99"+ "_"+str(args.output)+".txt"
+
+with open(output_file, 'w', encoding='utf-8') as f:
+    f.write(f"正規化(0で有効): {args.std}\n")
+    f.write(f"データセット: {args.data}\n")
+    f.write(f"打ち切り学習回数: {format(svm_iter, '.1e')}\n")
+    f.write(f'r_range = {r_range}\n')
+    f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
+    f.write(f"偵察バチのLIMIT: {LIMIT}\n")
+    f.write(f"サイクル数: {CYCLES}\n")
+    f.write(f"試行回数: {EX_CYCLE}\n")
+    
+STD = args.std#0で正規化有
+std_scaler = MinMaxScaler()
+# データセットのロード
+x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
+DEFAULT_ACCURACY =   0.9978543378810575
+# データをトレーニングセットとテストセットに分割する
+std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
+x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
+x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
+x_end_std = std_scaler.transform(x_end)
+
+
 #ABCアルゴリズム
 best_box = []#各試行の最良値
 TP_list, TN_list, FP_list, FN_list = [], [], [], []
@@ -332,8 +330,6 @@ for e in range(EX_CYCLE):
         # 追従バチ
         sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
-            #if np.random.rand() > fitness[i] / sum_fitness:
-             #   bee(i, solutions, fitness, trials)
           #ルーレット選択
              selected = roulette_wheel_selection(fitness)
              bee(selected, solutions, fitness, trials)
@@ -396,7 +392,7 @@ for e in range(EX_CYCLE):
     plt.xlabel('Generation')
     plt.ylabel('Best Accuracy')
     plt.grid(True)
-    plt.savefig(f"./{dataset_name}_{str(args.output)}-{e}.pdf", bbox_inches="tight")
+    plt.savefig(f"./kdd99_{str(args.output)}-{e}.pdf", bbox_inches="tight")
     
 with open(output_file, 'a', encoding='utf-8') as f:
     f.write("\n--- 最終結果（平均値）---\n")
