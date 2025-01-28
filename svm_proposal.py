@@ -373,7 +373,6 @@ for e in range(EX_CYCLE):
     print("default_Fitness:", DEFAULT_ACCURACY)
     # 実行時間の出力
     print(f"SVMの実行時間: {svm_time:.4f}秒")
-    #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write(f"Best Solution: {str(best_solution)}\n精度: {str(2 - (1 / best_fitness))}\n")
         f.write(f"C = {best_solution[1]*(C_range[1]- C_range[0]) + C_range[0]}\n")
