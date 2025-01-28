@@ -19,7 +19,7 @@ LIMIT = 10#偵察バチのパラメータ
 CYCLES = 500#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 10
+EX_CYCLE = 10
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -98,7 +98,75 @@ def calc_and_write_accuracy(t_data,pre,accuracy,name):
         f.write("\n誤分類(予測):\n")
         f.write(pred_label_counts.to_string() + "\n")
     return accuracy
+#ルーレット選択
+def roulette_wheel_selection(fitness):
+    total_fitness = np.sum(fitness)
+    if total_fitness == 0:
+        # フィットネスが全て0の場合、ランダムに選択
+        return np.random.randint(len(fitness))
+    probabilities = fitness / total_fitness
+    cumulative_probabilities = np.cumsum(probabilities)
+    r = np.random.rand()
+    # np.searchsorted を使って高速にインデックスを取得
+    selected_index = np.searchsorted(cumulative_probabilities, r)
+    return selected_index
 
+# 評価関数
+def evaluate_function(solution,flag):
+    global svm_time
+    global STD
+    global eva_count
+    s_svm_time = time.perf_counter() 
+    #print(f"評価中",solution) #デバッグ用    
+    svc = svm.SVC(kernel='rbf',  C = solution[0]*(C_range[1]- C_range[0]) + C_range[0],
+                  gamma = solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
+                  verbose=DEBUG,max_iter= svm_iter)
+    selected_features = solution[2:] >= 0.5
+    if np.sum(selected_features) == 0:
+        return 0 
+    if flag == 1:
+        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
+        predictions = svc.predict(x_end_std[:, selected_features])
+        Miss = 1 - accuracy_score(t_end, predictions)
+        calc_and_write_data(predictions)
+        train_predictions = svc.predict(x_train_std[:, selected_features])
+        train_accuracy = accuracy_score( t_train, train_predictions)
+        ac = calc_and_write_accuracy(t_train,train_predictions,train_accuracy,"学習セット")
+        learn_list.append(ac)
+        test_predictions = svc.predict(x_test_std[:, selected_features])
+        test_accuracy = accuracy_score(t_test, test_predictions)
+        ac = calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
+        test_list.append(ac)
+    elif STD == 0:
+        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
+        predictions = svc.predict(x_test_std[:, selected_features])#検証セット
+        Miss = 1 - accuracy_score(t_test, predictions)
+    else: print("正規化をしてください\n")
+    e_svm_time = time.perf_counter()
+    svm_time += e_svm_time - s_svm_time
+    eva_count = eva_count + 1
+    return  1/(1+Miss)#ただの評価値
+#収穫蜂と追従蜂の共通部分
+def bee(i, solutions, fitness, trials):
+    global best_fitness
+    global best_solution
+    new_solution = solutions[i].copy()
+    j = np.random.randint(0, DIM)#更新次元
+    k = np.random.randint(0, COLONY_SIZE)#ランダムな個体
+    while k == i:
+        k = np.random.randint(0, COLONY_SIZE)
+    new_solution[j] = solutions[i][j] + np.random.uniform(-1, 1) * (solutions[i][j] - solutions[k][j])
+    new_solution[j] = np.clip(new_solution[j],0,1)
+    new_fitness = evaluate_function(new_solution,0)
+    if new_fitness > fitness[i]:
+        solutions[i] = new_solution
+        fitness[i] = new_fitness
+        trials[i] = 0
+        if fitness[i] > best_fitness:
+            best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
+            best_solution = solutions[i].copy()
+    else:
+        trials[i] += 1
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -154,7 +222,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"コロニーサイズ: {COLONY_SIZE}\n")
     f.write(f"偵察バチのLIMIT: {LIMIT}\n")
     f.write(f"サイクル数: {CYCLES}\n")
-    f.write(f"試行回数: {ex_cycle}\n")
+    f.write(f"試行回数: {EX_CYCLE}\n")
 STD = args.std#0で正規化有
 std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
@@ -166,74 +234,7 @@ std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータ�
 x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
 x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
 x_end_std = std_scaler.transform(x_end)
-#ルーレット選択
-def roulette_wheel_selection(fitness):
-    total_fitness = np.sum(fitness)
-    if total_fitness == 0:
-        # フィットネスが全て0の場合、ランダムに選択
-        return np.random.randint(len(fitness))
-    probabilities = fitness / total_fitness
-    cumulative_probabilities = np.cumsum(probabilities)
-    r = np.random.rand()
-    # np.searchsorted を使って高速にインデックスを取得
-    selected_index = np.searchsorted(cumulative_probabilities, r)
-    return selected_index
 
-# 評価関数
-def evaluate_function(solution,flag):
-    global svm_time
-    global STD
-    global eva_count
-    s_svm_time = time.perf_counter() 
-    #print(f"評価中",solution) #デバッグ用    
-    svc = svm.SVC(kernel='rbf',  C = solution[0]*(C_range[1]- C_range[0]) + C_range[0],
-                  gamma = solution[1]*(gamma_range[1]- gamma_range[0]) + gamma_range[0],
-                  verbose=DEBUG,max_iter= svm_iter)
-    selected_features = solution[2:] >= 0.5
-    if np.sum(selected_features) == 0:
-        return 0 
-    if flag == 1:
-        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
-        predictions = svc.predict(x_end_std[:, selected_features])
-        Miss = 1 - accuracy_score(t_end, predictions)
-        calc_and_write_data(predictions)
-        train_predictions = svc.predict(x_train_std[:, selected_features])
-        train_accuracy = accuracy_score( t_train, train_predictions)
-        ac = calc_and_write_accuracy(t_train,train_predictions,train_accuracy,"学習セット")
-        learn_list.append(ac)
-        test_predictions = svc.predict(x_test_std[:, selected_features])
-        test_accuracy = accuracy_score(t_test, test_predictions)
-        ac = calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
-        test_list.append(ac)
-    elif STD == 0:
-        svc.fit(x_train_std[:, selected_features], t_train)#学習セット
-        predictions = svc.predict(x_test_std[:, selected_features])#検証セット
-        Miss = 1 - accuracy_score(t_test, predictions)
-    else: print("正規化をしてください\n")
-    e_svm_time = time.perf_counter()
-    svm_time += e_svm_time - s_svm_time
-    eva_count = eva_count + 1
-    return  1/(1+Miss)#ただの評価値
-def bee(i, solutions, fitness, trials):
-    global best_fitness
-    global best_solution
-    new_solution = solutions[i].copy()
-    j = np.random.randint(0, DIM)#更新次元
-    k = np.random.randint(0, COLONY_SIZE)#ランダムな個体
-    while k == i:
-        k = np.random.randint(0, COLONY_SIZE)
-    new_solution[j] = solutions[i][j] + np.random.uniform(-1, 1) * (solutions[i][j] - solutions[k][j])
-    new_solution[j] = np.clip(new_solution[j],0,1)
-    new_fitness = evaluate_function(new_solution,0)
-    if new_fitness > fitness[i]:
-        solutions[i] = new_solution
-        fitness[i] = new_fitness
-        trials[i] = 0
-        if fitness[i] > best_fitness:
-            best_fitness = fitness[i]  # ここは2つの変数を一つにまとめたほうが良いかも
-            best_solution = solutions[i].copy()
-    else:
-        trials[i] += 1
 #ABCアルゴリズム
 best_box = []
 All_time = []
@@ -247,7 +248,7 @@ timelist,evalist =[],[]
 #ax.set_xlabel('Generation')
 #ax.set_ylabel('Best Fitness')
 #ax.grid(True)
-for e in range(ex_cycle):
+for e in range(EX_CYCLE):
     with open(output_file, 'a', encoding='utf-8') as f:
         f.write("###############\n\n")
         f.write(f"{e+1}試行目\n\n")

@@ -239,7 +239,7 @@ def roulette_kernel(new_solution,solutions):
 def initialize_solution():
     kernel = np.random.choice(kernels)
     return [kernel, np.random.rand(), np.random.rand(), np.random.rand(), np.random.rand()]
-
+#収穫蜂と追従蜂の共通部分
 def bee(func_i, solutions, fitness, trials):
     """解の更新
 
