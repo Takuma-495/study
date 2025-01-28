@@ -100,7 +100,6 @@ def calc_and_write_accuracy(t_data,pre,accuracy,name):
         f.write(true_label_counts.to_string() + "\n")
         f.write("\n誤分類(予測):\n")
         f.write(pred_label_counts.to_string() + "\n")
-    return accuracy
 def load_kdd99():
     url = "http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz"
     col_names = ["duration", "protocol_type", "service", "flag", "src_bytes",
@@ -208,9 +207,9 @@ def evaluate_function(solution,flag):
         calc_and_write_accuracy(t_train,train_predictions,train_accuracy,"学習セット")
         test_predictions = svc.predict(x_test_std)
         test_accuracy = accuracy_score(t_test, test_predictions)
+        test_list.append(test_accuracy)
         calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
-        ac = calc_and_write_accuracy(t_test,test_predictions,test_accuracy,"検証セット")
-        test_list.append(ac)
+        
     elif STD == 0:
         svc.fit(x_train_std, t_train)#学習セット
         predictions = svc.predict(x_test_std)#検証セット
@@ -373,7 +372,6 @@ for e in range(EX_CYCLE):
     print("Best Fitness:", 2 - (1/best_fitness))
     print("default_Fitness:", DEFAULT_ACCURACY)
     # 実行時間の出力
-    print(f"実行時間: {execution_time:.4f}秒")
     print(f"SVMの実行時間: {svm_time:.4f}秒")
     #print(f"デフォルト実行時間: {time:.4f}秒")
     with open(output_file, 'a', encoding='utf-8') as f:
@@ -383,7 +381,6 @@ for e in range(EX_CYCLE):
         f.write(f"coef0 = {best_solution[3]*(r_range[1]- r_range[0]) + r_range[0]}\n")
         f.write(f"d = {best_solution[4]*(degree_range[1]- degree_range[0]) + degree_range[0]}\n")
         f.write(f"デフォルト精度: {DEFAULT_ACCURACY}\n")
-        f.write(f"実行時間: {execution_time:.4f}秒\n")
         f.write(f"SVMの実行時間: {svm_time:.4f}秒\n")
         f.write(f"SVMの実行時間H: {svm_time/3600:.4f}時間\n")
         f.write(f"評価回数: {eva_count}回\n")
