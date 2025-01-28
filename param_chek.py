@@ -12,7 +12,7 @@ np.set_printoptions(precision=5,suppress=True,floatmode='maxprec_equal')
 課題
 カーネル関数によって更新パラメータを制御（済)
 degreeの値が変わらなかったらもう一度個体生成(済)
-標準化の有無の指定(済)
+正規化の有無の指定(済)
 多項式カーネルかつ特定のパラメータセットでは計算量が膨大になる(評価困難)→d(1-3)に変更(済)
 ルーレット選択の実装(済)
 実験を複数回やってそこから統計的な値を出す機能の追加(済)
@@ -148,7 +148,7 @@ parser.add_argument("-o", "--output", help="ファイルの枝番とか")
 args = parser.parse_args()
 output_file =  "実験データ_"+str(args.output)+".txt"
 dataset_name = "kdd99"  # ここを 'iris', 'wine', 'digits', 'breast_cancer' , 'kdd99'のいずれかに変える
-STD = 0#0で標準化有
+STD = 0#0で正規化有
 std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
 # データセットのロード
@@ -156,8 +156,8 @@ x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 DEFAULT_ACCURACY = 0.9983603902676005
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
-x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
-x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
+x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
+x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
 x_end_std = std_scaler.transform(x_end)
 
 # 評価関数
@@ -187,7 +187,7 @@ def evaluate_function(solution,flag):
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_test_std[:, selected_features])#検証セット
         Miss = 1 - accuracy_score(t_test, predictions)
-    else: print("標準化をしてください\n")
+    else: print("正規化をしてください\n")
     return  1/(1+Miss)#ただの評価値
 #ABCアルゴリズム
 learn_list,test_list =[],[]

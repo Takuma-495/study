@@ -12,8 +12,8 @@ np.set_printoptions(precision=5,suppress=True,floatmode='maxprec_equal')
 kernels = [1,2,3,4]#[1, 2, 3, 4]
 C_range = (1.0e-6, 3.5e4)#(1.0e-6, 3.5e4)
 gamma_range =(1.0e-6, 32)#(1.0e-6, 32)
-r_range = (0, 10)#(-10, 10)
-degree_range = (1, 3) #ここが４，５だと処理終わらなくなる #(1, 3)
+r_range = (0, 10)#(0, 10)
+degree_range = (1, 3) #ここが4，5だと処理終わらなくなる #(1, 3)
 svm_iter = int(1.0e7)#100万#制限なし　＝　−１
 DEBAG = False #True or False
 #ABCのハイパーパラメータ
@@ -141,7 +141,7 @@ def load_kdd99():
     return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
 
 parser = argparse.ArgumentParser(description="説明をここに書く")
-parser.add_argument("-s","--std", type=int, default=0, help="0で標準化")
+parser.add_argument("-s","--std", type=int, default=0, help="0で正規化")
 parser.add_argument("-d","--data", type=str,default="kdd99" , help="データセットネーム")
 parser.add_argument("-o", "--output", default= 0, help="ファイルの枝番とか")
 args = parser.parse_args()
@@ -159,7 +159,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"サイクル数: {CYCLES}\n")
     f.write(f"試行回数: {EX_CYCLE}\n")
     
-STD = args.std#0で標準化有
+STD = args.std#0で正規化有
 std_scaler = MinMaxScaler()
 
 # データセットのロード
@@ -167,8 +167,8 @@ x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 DEFAULT_ACCURACY =   0.9978543378810575
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
-x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
-x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
+x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
+x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
 x_end_std = std_scaler.transform(x_end)
 
 # 評価関数
@@ -234,12 +234,6 @@ def roulette_kernel(new_solution,solutions):
     else :
         trials[i] += 1
     return 
-"""
-def random_kernel(new_solution): 
-    temp = new_solution[j]
-    while  new_solution[j] != temp:
-          new_solution[j] =np.random.randint(1,5)
-"""
 
 # 解の初期化
 def initialize_solution():

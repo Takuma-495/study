@@ -49,18 +49,15 @@ def load_kdd99():
     t_tes = df_test['label']
     return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
 
-
-dataset_name = 'kdd99'  
-
 x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 
 std_scaler = MinMaxScaler()
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
-x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
-x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
+x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
+x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
 x_end_std = std_scaler.transform(x_end)
 
-STD = 0#0で標準化有
+STD = 0#0で正規化有
 svm_time = 0
 s_svm_time = time.perf_counter()
 svc = svm.SVC(kernel='poly')#カーネル関数を指定

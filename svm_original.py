@@ -16,10 +16,10 @@ DEBUG = False #True or False
 #ABCのハイパーパラメータ
 COLONY_SIZE = 10#コロニーサイズ*2(偶数整数)
 LIMIT = 10#偵察バチのパラメータ
-CYCLES = 50#サイクル数
+CYCLES = 500#サイクル数
 DIM = 40# 次元数 (カーネル ,C,γ,r, degree)
 #実験回数
-ex_cycle = 1
+ex_cycle = 10
 def map_labels(y):
     return ['normal' if label == 'normal' else 'attack' for label in y]
 def calc_and_write_data(pre):
@@ -127,9 +127,9 @@ def load_kdd99():
         }
     # ラベルをマッピング
     data_frame['label'] = data_frame['label'].map(label_map)
-    df_train = data_frame.sample(frac=0.01, random_state=42)
-    df_check = data_frame.sample(frac=0.01, random_state=41)
-    df_test = data_frame.sample(frac=0.01, random_state=39)
+    df_train = data_frame.sample(frac=0.1, random_state=42)
+    df_check = data_frame.sample(frac=0.1, random_state=41)
+    df_test = data_frame.sample(frac=0.1, random_state=39)
     x_trai = df_train.drop('label', axis=1)
     t_trai = df_train['label']
     x_ch = df_check.drop('label', axis=1)
@@ -139,7 +139,7 @@ def load_kdd99():
     return x_trai, t_trai, x_ch, t_ch, x_tes, t_tes
 
 parser = argparse.ArgumentParser(description="説明をここに書く")
-parser.add_argument("-s","--std", type=int, default=0, help="0で標準化")
+parser.add_argument("-s","--std", type=int, default=0, help="0で正規化")
 parser.add_argument("-d","--data", type=str,default ="kdd99", help="データセットネーム")
 parser.add_argument("-o", "--output", default= 0, help="ファイルの枝番とか")
 args = parser.parse_args()
@@ -155,7 +155,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"偵察バチのLIMIT: {LIMIT}\n")
     f.write(f"サイクル数: {CYCLES}\n")
     f.write(f"試行回数: {ex_cycle}\n")
-STD = args.std#0で標準化有
+STD = args.std#0で正規化有
 std_scaler = MinMaxScaler()
 #std_scaler = StandardScaler()
 # データセットのロード
@@ -163,8 +163,8 @@ x_train, t_train, x_test, t_test, x_end, t_end = load_kdd99()
 DEFAULT_ACCURACY = 0.9978543378810575
 # データをトレーニングセットとテストセットに分割する
 std_scaler.fit(x_train)  # 訓練データでスケーリングパラメータを学習
-x_train_std = std_scaler.transform(x_train)  # 訓練データの標準化
-x_test_std = std_scaler.transform(x_test)    # テストデータの標準化
+x_train_std = std_scaler.transform(x_train)  # 訓練データの正規化
+x_test_std = std_scaler.transform(x_test)    # テストデータの正規化
 x_end_std = std_scaler.transform(x_end)
 #ルーレット選択
 def roulette_wheel_selection(fitness):
@@ -209,7 +209,7 @@ def evaluate_function(solution,flag):
         svc.fit(x_train_std[:, selected_features], t_train)#学習セット
         predictions = svc.predict(x_test_std[:, selected_features])#検証セット
         Miss = 1 - accuracy_score(t_test, predictions)
-    else: print("標準化をしてください\n")
+    else: print("正規化をしてください\n")
     e_svm_time = time.perf_counter()
     svm_time += e_svm_time - s_svm_time
     eva_count = eva_count + 1
