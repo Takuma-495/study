@@ -1,4 +1,3 @@
-from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score
 from sklearn import svm
 from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
@@ -61,6 +60,7 @@ STD = 0#0で正規化有
 svm_time = 0
 s_svm_time = time.perf_counter()
 svc = svm.SVC(kernel='poly')#カーネル関数を指定
+
 if STD == 0:
     svc.fit(x_train_std, t_train)
     predictions = svc.predict(x_test_std)
@@ -73,68 +73,6 @@ accuracy = accuracy_score(t_end, predictions)
 
 e_svm_time = time.perf_counter()
 svm_time += e_svm_time - s_svm_time
-# 正解ラベルと予測ラベルを「通常状態」と「攻撃状態」に再分類
-def map_labels(y):
-    return ['normal' if label == 'normal' else 'attack' for label in y]
-
-# 再分類されたラベル
-y_test_mapped = map_labels(t_end)
-y_pred_mapped = map_labels(predictions)
-
-# 混同行列の計算
-cm = confusion_matrix(y_test_mapped, y_pred_mapped, labels=['normal', 'attack'])
-
-# 混同行列から各値を抽出
-TN, FP, FN, TP = cm.ravel()
-
-print(f"True Positives (TP): {TP}")
-print(f"True Negatives (TN): {TN}")
-print(f"False Positives (FP): {FP}")
-print(f"False Negatives (FN): {FN}")
-
-# 検知率（再現率）
-detection_rate = recall_score(y_test_mapped, y_pred_mapped, pos_label='attack')
-
-# 誤警報率
-false_alarm_rate = FP / (TN + FP)
-
-# 適合率
-precision = precision_score(y_test_mapped, y_pred_mapped, pos_label='attack')
-
-# F値
-f1 = f1_score(y_test_mapped, y_pred_mapped, pos_label='attack')
-
-print(f"検知率: {detection_rate:.4f}")
-print(f"誤警報率: {false_alarm_rate:.4f}")
-print(f"適合率: {precision:.4f}")
-print(f"F1-Score: {f1:.4f}")
-
-# t_end と predictions が pandas.Series の場合に備えて iloc を使用
-incorrect_indices = [i for i in range(len(t_end)) if t_end.iloc[i] != predictions[i]]
-
-# 誤分類されたラベルを取得
-incorrect_labels = [(t_end.iloc[i], predictions[i]) for i in incorrect_indices]
-
-# 誤分類されたラベルを正解ラベルでソート
-sorted_incorrect_labels = sorted(incorrect_labels, key=lambda x: x[0])
-
-# ソート後の結果を表示
-print("誤分類したデータ (正解ラベルでソート):")
-for true_label, pred_label in sorted_incorrect_labels:
-    print(f"True: {true_label}, Predicted: {pred_label}")
-
-# 誤分類された "正解ラベル" の数をカウント
-true_label_counts = pd.Series([true_label for true_label, pred_label in incorrect_labels]).value_counts()
-
-# 誤分類された "予測ラベル" の数をカウント
-pred_label_counts = pd.Series([pred_label for true_label, pred_label in incorrect_labels]).value_counts()
-
-# 結果の表示 (各クラスの誤分類数)
-print("\nMisclassified True Labels:")
-print(true_label_counts)
-
-print("\nMisclassified Predicted Labels:")
-print(pred_label_counts)
 
 # 結果の出力
 print("Fitness:", accuracy)
