@@ -328,7 +328,6 @@ for e in range(EX_CYCLE):
             bee(i, solutions, fitness, trials)
 
         # 追従バチ
-        sum_fitness = sum(fitness)
         for i in range(COLONY_SIZE):
           #ルーレット選択
              selected = roulette_wheel_selection(fitness)
