@@ -284,7 +284,6 @@ def roulette_wheel_selection(fitness):
     return selected_index
 #ABCアルゴリズム
 best_box = []#各試行の最良値
-All_time = []
 TP_list, TN_list, FP_list, FN_list = [], [], [], []
 detection_rate_list, false_alarm_rate_list = [], []
 precision_list, f1_list = [], []
@@ -311,7 +310,6 @@ for e in range(EX_CYCLE):
     trials = np.zeros(COLONY_SIZE)
 
     # 解の初期化
-    s_all_time = time.perf_counter()
     for i in range(COLONY_SIZE):
         solutions[i] = initialize_solution()
         fitness[i] = evaluate_function(solutions[i],0)
@@ -359,10 +357,7 @@ for e in range(EX_CYCLE):
             f.write(str(best_solution) + "\n") 
     #ここにテストセットで分類精度を検証するプログラムを記述（これが最終的な分類精度)
     best_fitness= evaluate_function(best_solution,1)   
-    e_all_time = time.perf_counter()
-    execution_time = e_all_time - s_all_time
     best_box.append(2 - (1 / best_fitness))
-    All_time.append(execution_time)
     TP_list.append(TP)
     TN_list.append(TN)
     FP_list.append(FP)
