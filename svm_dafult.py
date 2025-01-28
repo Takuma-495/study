@@ -67,8 +67,8 @@ if STD == 0:
 else:
     svc.fit(x_train, t_train)
     predictions = svc.predict(x_test)
-if dataset_name == 'kdd99':
-    predictions =svc.predict(x_end_std)
+
+predictions =svc.predict(x_end_std)
 accuracy = accuracy_score(t_end, predictions)
 
 e_svm_time = time.perf_counter()
