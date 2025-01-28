@@ -271,7 +271,7 @@ for e in range(EX_CYCLE):
             f.write(f"{solutions[i]}\n")  
     # ABC   
     for _ in range(CYCLES):
-        # 働きバチ
+        # 収穫バチ
         for i in range(COLONY_SIZE):
             bee(i, solutions, fitness, trials)
         # 追従バチ
