@@ -162,7 +162,6 @@ def roulette_kernel(new_solution,solutions):
         new_solution[0] = solutions[k][0]
     else :
         trials[i] += 1
-    return 
 
 # 解の初期化
 def initialize_solution():
